@@ -266,14 +266,6 @@ export default function Layout({ children, currentPageName }) {
               >
                 Donate Now
               </button>
-                Refer a Kid
-              </Link>
-              <button
-                onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-full font-semibold btn-primary"
-              >
-                Donate Now
-              </button>
             </div>
 
             <div className="md:hidden">
