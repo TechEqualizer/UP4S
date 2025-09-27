@@ -43,7 +43,7 @@ export default function About() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="py-20 md:py-24 bg-gradient-to-r from-blue-600 to-purple-800 text-white relative overflow-hidden">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-blue-600 to-purple-800 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <img
             src="https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=1920&h=1080&fit=crop"
@@ -52,32 +52,32 @@ export default function About() {
 
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div className="text-center lg:text-left">
-              <h1 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 leading-tight">
                 Unlimited Potential 4 Success
                 <span className="block text-white">
                   Founded on a Dream, Built for Our Community
                 </span>
               </h1>
-              <p className="text-lg md:text-xl text-blue-100 mb-8 leading-relaxed">In 1999, Shannon Anderson dreamed of a place called "Unlimited Potential 4 Success." Today, his wife, founder Wendy Anderson, has brought that vision to life. Team UP4S is a 501(c)(3) nonprofit dedicated to diverting disadvantaged youth in Metro Detroit from street violence, drug use, and trauma. We provide professional training in film, media, and performing arts, empowering them to find their voice, build their future, and tell their story.
+              <p className="text-base sm:text-lg md:text-xl text-blue-100 mb-6 sm:mb-8 leading-relaxed">In 1999, Shannon Anderson dreamed of a place called "Unlimited Potential 4 Success." Today, his wife, founder Wendy Anderson, has brought that vision to life. Team UP4S is a 501(c)(3) nonprofit dedicated to diverting disadvantaged youth in Metro Detroit from street violence, drug use, and trauma. We provide professional training in film, media, and performing arts, empowering them to find their voice, build their future, and tell their story.
               </p>
               <Button
                 onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-yellow-600 px-8 py-3 text-lg font-semibold">
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-yellow-600 px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold w-full sm:w-auto">
 
                 Support Our Mission
               </Button>
             </div>
-            <div className="relative mt-8 lg:mt-0">
+            <div className="relative mt-6 lg:mt-0 flex justify-center">
               <img
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/cc6b4c44b_Screenshot2025-08-24at92111AM.png"
                 alt="Wendy Anderson with her family"
-                className="w-full max-w-sm mx-auto rounded-2xl shadow-2xl" />
+                className="w-full max-w-xs sm:max-w-sm rounded-2xl shadow-2xl" />
 
-              <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 bg-white rounded-2xl p-4 sm:p-6 shadow-xl">
+              <div className="absolute -bottom-3 -right-3 sm:-bottom-4 sm:-right-4 bg-white rounded-2xl p-3 sm:p-4 shadow-xl">
                 <div className="text-center">
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">Wendy Anderson</p>
+                  <p className="text-lg sm:text-xl font-bold text-gray-900">Wendy Anderson</p>
                   <p className="text-sm sm:text-base text-gray-600">Founder & CEO</p>
                 </div>
               </div>
@@ -87,7 +87,7 @@ export default function About() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 sm:py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {stats.map((stat, index) =>
@@ -96,11 +96,11 @@ export default function About() {
               className="text-center animate-fade-in"
               style={{ animationDelay: `${index * 0.2}s` }}>
 
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="w-8 h-8 text-white" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <stat.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">{stat.number}</div>
-                <div className="text-gray-600">{stat.label}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{stat.number}</div>
+                <div className="text-sm sm:text-base text-gray-600">{stat.label}</div>
               </div>
             )}
           </div>

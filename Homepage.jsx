@@ -87,7 +87,7 @@ export default function Homepage() {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative h-[90vh] md:h-screen flex items-center justify-center bg-gray-900 overflow-hidden">
+      <section className="relative h-[80vh] md:h-[90vh] flex items-center justify-center bg-gray-900 overflow-hidden">
         {/* Slides container */}
         {heroSlides.map((slide, index) => (
           <div
@@ -106,26 +106,26 @@ export default function Homepage() {
 
             {/* Slide Content */}
             <div className="relative h-full flex items-center justify-center">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <div
                   className={`transition-all duration-1000 ease-in-out ${
                     index === currentHeroSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
                   }`}
                 >
-                  <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+                  <h1 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight">
                     {slide.title}
                     <br />
                     <span className="gradient-text bg-gradient-to-r from-yellow-400 to-yellow-500 bg-clip-text text-transparent">
                       {slide.subtitle}
                     </span>
                   </h1>
-                  <p className="hidden sm:block text-lg md:text-xl text-gray-200 mb-12 max-w-3xl mx-auto leading-relaxed">
+                  <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
                     Team UP4S is a 501(c)(3) nonprofit diverting at-risk youth from street violence and trauma through professional training in film, media, and performing arts. Your gift provides a creative outlet and a path to a brighter future.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
                     <Button
                       onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-                      className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-8 py-3 sm:py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300 shadow-2xl w-full sm:w-auto"
+                      className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 sm:px-8 py-3 rounded-full text-base sm:text-lg font-semibold transform hover:scale-105 transition-all duration-300 shadow-2xl w-full sm:w-auto max-w-xs"
                     >
                       <Heart className="w-5 h-5 mr-2" />
                       Make Tax-Deductible Gift
@@ -138,12 +138,12 @@ export default function Homepage() {
         ))}
 
         {/* Slide indicators */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-20">
+        <div className="absolute bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
           {heroSlides.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentHeroSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
                 index === currentHeroSlide ? 'bg-white' : 'bg-white/40'
               }`}
             />
@@ -152,33 +152,33 @@ export default function Homepage() {
       </section>
 
       {/* Impact Pillars */}
-      <section className="py-20 md:py-24 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">How We Create <span className="gradient-text">Tomorrow's Voices</span>
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">How We Create <span className="gradient-text">Tomorrow's Voices</span>
 
             </h2>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">Through our unique three-pillar approach, we empower disadvantaged youth in Metro Detroit by giving them the professional tools and expert guidance to tell their stories and build their futures.
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-4xl mx-auto px-4">Through our unique three-pillar approach, we empower disadvantaged youth in Metro Detroit by giving them the professional tools and expert guidance to tell their stories and build their futures.
 
 
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
             {impactPillars.map((pillar, index) =>
             <div
               key={pillar.title}
-              className="group text-center animate-slide-up"
+              className="group text-center animate-slide-up px-4"
               style={{ animationDelay: `${index * 0.2}s` }}>
 
                 <div
-                className={`has-line-swipe relative w-20 h-20 mx-auto mb-8 bg-gradient-to-r ${pillar.color} rounded-2xl group-hover:scale-110 transition-all duration-300 shadow-lg overflow-hidden`}
+                className={`has-line-swipe relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-6 sm:mb-8 bg-gradient-to-r ${pillar.color} rounded-2xl group-hover:scale-110 transition-all duration-300 shadow-lg overflow-hidden`}
                 style={{ animationDelay: `calc(${index * 0.2}s + 0.4s)` }}>
 
                   <img src={pillar.image} alt={pillar.title} className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{pillar.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{pillar.description}</p>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">{pillar.title}</h3>
+                <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{pillar.description}</p>
               </div>
             )}
           </div>
@@ -186,14 +186,14 @@ export default function Homepage() {
       </section>
 
       {/* Featured Gallery Preview */}
-      <section className="py-24 bg-white">
+      <section className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-16">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12 md:mb-16">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">
                 Dreams Made <span className="gradient-text">Real</span>
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-base sm:text-lg md:text-xl text-gray-600">
                 See the incredible films and art created by the amazing kids we serve.
               </p>
             </div>
@@ -204,7 +204,7 @@ export default function Homepage() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {featuredGallery.slice(0, 6).map((item, index) => (
               <div
                 key={item.id}
@@ -230,16 +230,16 @@ export default function Homepage() {
 
                   {item.media_type === 'video' && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Play className="w-8 h-8 text-gray-900 ml-1" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Play className="w-6 h-6 sm:w-8 sm:h-8 text-gray-900 ml-1" />
                       </div>
                     </div>
                   )}
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/70 via-black/50 to-transparent text-white transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                  <h3 className="font-bold text-lg mb-2">{item.title}</h3>
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/70 via-black/50 to-transparent text-white transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                  <h3 className="font-bold text-base sm:text-lg mb-1 sm:mb-2">{item.title}</h3>
                   {item.child_name &&
-                <p className="text-sm text-gray-200">
+                <p className="text-xs sm:text-sm text-gray-200">
                       Created by {item.child_name}, age {item.child_age}
                     </p>
                 }
@@ -248,7 +248,7 @@ export default function Homepage() {
             ))}
           </div>
 
-          <div className="text-center mt-12 sm:hidden">
+          <div className="text-center mt-8 sm:hidden">
             <Button asChild variant="outline">
               <Link to={createPageUrl("Gallery")}>
                 View All Stories
@@ -259,19 +259,19 @@ export default function Homepage() {
       </section>
 
       {/* Call to Action */}
-      <section className="py-24 bg-gradient-to-r from-blue-600 to-blue-800 text-white relative overflow-hidden">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-blue-600 to-blue-800 text-white relative overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
             Ready to Make a Difference?
           </h2>
-          <p className="text-xl mb-12 opacity-90 leading-relaxed">Your support doesn't just fund equipment; it provides a safe space, critical skills, and a new direction for youth in our community. Help us divert young people from the streets and into the studio.
+          <p className="text-base sm:text-lg md:text-xl mb-8 sm:mb-12 opacity-90 leading-relaxed px-4">Your support doesn't just fund equipment; it provides a safe space, critical skills, and a new direction for youth in our community. Help us divert young people from the streets and into the studio.
 
 
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Button
               onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-10 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300">
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 sm:px-10 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold transform hover:scale-105 transition-all duration-300 w-full sm:w-auto max-w-xs mx-auto">
 
               <Heart className="w-5 h-5 mr-2" />
               Donate Today

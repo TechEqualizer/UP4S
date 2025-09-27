@@ -109,12 +109,12 @@ export default function Layout({ children, currentPageName }) {
                   <TestTube className="w-4 h-4 inline mr-2" />
                   Testing
                 </Link>
-              </div>
+            <Link to={createPageUrl("ReferKid")} className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-2 rounded-full font-medium text-sm btn-gold">
             </div>
 
             <Link
               to={createPageUrl("Homepage")}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-full font-medium text-sm btn-primary"
             >
               View Site
             </Link>
