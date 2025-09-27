@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { GalleryItem } from '@/api/entities';
 import { Heart, ArrowRight, Play, User, X } from 'lucide-react';
@@ -6,7 +5,7 @@ import DonationModal from './components/donation/DonationModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import VideoEmbed, { getVideoThumbnail } from 'src/components/gallery/VideoEmbed';
+import VideoEmbed, { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
 import { Link } from 'react-router-dom';
 
 export default function Homepage() {
