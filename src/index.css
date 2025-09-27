@@ -156,3 +156,69 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* UP4S Brand Colors */
+  :root {
+    --up4s-blue: #004AAD;
+    --up4s-gold: #FFCC33;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--up4s-blue), var(--up4s-gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--up4s-blue), #0056cc);
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 74, 173, 0.3);
+  }
+
+  .btn-gold {
+    background: linear-gradient(135deg, var(--up4s-gold), #ffd700);
+    transition: all 0.3s ease;
+  }
+
+  .btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 204, 51, 0.4);
+  }
+
+  /* Responsive text utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Improved mobile spacing */
+  @media (max-width: 640px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  @keyframes slide-in-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+  }
+}
