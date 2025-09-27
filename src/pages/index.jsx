@@ -1,26 +1,26 @@
 import Layout from "../Layout.jsx";
 
-import Homepage from "../Homepage";
+import Homepage from "../../Homepage";
 
-import ReferKid from "../ReferKid";
+import ReferKid from "../../ReferKid";
 
-import Gallery from "../Gallery";
+import Gallery from "../../Gallery";
 
-import About from "../About";
+import About from "../../About";
 
-import AdminDashboard from "../AdminDashboard";
+import AdminDashboard from "../../AdminDashboard";
 
-import ProductionChecklist from "../ProductionChecklist";
+import ProductionChecklist from "../../ProductionChecklist";
 
-import PrivacyPolicy from "../PrivacyPolicy";
+import PrivacyPolicy from "../../PrivacyPolicy";
 
-import TermsOfService from "../TermsOfService";
+import TermsOfService from "../../TermsOfService";
 
-import Fundraising from "../Fundraising";
+import Fundraising from "../../Fundraising";
 
-import DonationSuccess from "../DonationSuccess";
+import DonationSuccess from "../../DonationSuccess";
 
-import TestingDashboard from "../TestingDashboard";
+import TestingDashboard from "../../TestingDashboard";
 
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
