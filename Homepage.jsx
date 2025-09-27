@@ -172,10 +172,10 @@ export default function Homepage() {
               style={{ animationDelay: `${index * 0.2}s` }}>
 
                 <div
-                className={`has-line-swipe relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-6 sm:mb-8 bg-gradient-to-r ${pillar.color} rounded-2xl group-hover:scale-110 transition-all duration-300 shadow-lg overflow-hidden`}
+                className={`has-line-swipe relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 sm:mb-8 bg-gradient-to-r ${pillar.color} rounded-2xl group-hover:scale-110 transition-all duration-300 shadow-lg overflow-hidden flex items-center justify-center`}
                 style={{ animationDelay: `calc(${index * 0.2}s + 0.4s)` }}>
 
-                  <img src={pillar.image} alt={pillar.title} className="w-full h-full object-cover" />
+                  <img src={pillar.image} alt={pillar.title} className="w-12 h-12 sm:w-14 sm:h-14 object-contain filter brightness-0 invert" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">{pillar.title}</h3>
                 <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{pillar.description}</p>
