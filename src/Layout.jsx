@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/index.ts";
-import { User } from "@/api/entities";
 import { NewsletterSubscriber } from "@/api/entities";
 import { Heart, Camera, Users, Settings, BarChart3, Menu, X, TestTube } from "lucide-react";
 import DonationModal from "../components/donation/DonationModal";
@@ -11,30 +10,10 @@ export default function Layout({ children, currentPageName }) {
   const isAdminPage = currentPageName?.startsWith('Admin') || currentPageName === 'TestingDashboard';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
-  const [user, setUser] = useState(null);
 
   // Newsletter signup state
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [isNewsletterSubmitting, setIsNewsletterSubmitting] = useState(false);
-
-  // Fetch user on component mount/path change
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const isAuthenticated = await User.isAuthenticated();
-        if (isAuthenticated) {
-          const currentUser = await User.me();
-          setUser(currentUser);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        // User not logged in or session expired - this is OK for public pages
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, [location.pathname]); // Re-fetch on path change to ensure user status is up-to-date
 
   // Global handler for opening the donation modal
   useEffect(() => {
@@ -400,9 +379,7 @@ export default function Layout({ children, currentPageName }) {
                   <li><Link to={createPageUrl("Gallery")} className="text-gray-300 hover:text-white transition-colors">Gallery</Link></li>
                   <li><Link to={createPageUrl("Fundraising")} className="text-gray-300 hover:text-white transition-colors">Support Us</Link></li>
                   <li><Link to={createPageUrl("ReferKid")} className="text-gray-300 hover:text-white transition-colors">Refer a Kid</Link></li>
-                  {user && user.role === 'admin' && (
-                    <li><Link to={createPageUrl("AdminDashboard")} className="text-gray-300 hover:text-white transition-colors">Admin</Link></li>
-                  )}
+                  <li><Link to={createPageUrl("AdminDashboard")} className="text-gray-300 hover:text-white transition-colors">Admin</Link></li>
                 </ul>
               </div>
 

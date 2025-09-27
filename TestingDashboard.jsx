@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 
 export default function TestingDashboard() {
-  const [user, setUser] = useState(null);
   const [testResults, setTestResults] = useState({});
   const [isRunningTests, setIsRunningTests] = useState(false);
   const [currentTest, setCurrentTest] = useState(null);
@@ -38,18 +37,8 @@ export default function TestingDashboard() {
   });
 
   useEffect(() => {
-    checkUserPermissions();
     loadSystemData();
   }, []);
-
-  const checkUserPermissions = async () => {
-    try {
-      const currentUser = await User.me();
-      setUser(currentUser);
-    } catch (error) {
-      console.error('Error checking user permissions:', error);
-    }
-  };
 
   const loadSystemData = async () => {
     try {
@@ -85,9 +74,8 @@ export default function TestingDashboard() {
           description: 'Verify admin users can access admin sections',
           type: 'automated',
           run: async () => {
-            if (!user) return { status: 'fail', message: 'No user logged in' };
-            if (user.role !== 'admin') return { status: 'fail', message: 'User is not admin' };
-            return { status: 'pass', message: 'Admin user verified' };
+            // Mock admin verification since authentication is removed
+            return { status: 'pass', message: 'Admin access available (authentication disabled)' };
           }
         },
         {
@@ -478,20 +466,6 @@ export default function TestingDashboard() {
       default: return 'bg-gray-50 border-gray-200';
     }
   };
-
-  if (!user || user.role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="p-8 text-center">
-            <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-            <p className="text-gray-600">Testing Dashboard is only available to admin users.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
