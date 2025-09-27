@@ -6,8 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Play, Heart, User, X } from 'lucide-react';
-import VideoEmbed from './components/gallery/VideoEmbed';
-import { getVideoThumbnail } from './components/gallery/VideoEmbed'; // Import getVideoThumbnail
 
 export default function Gallery() {
   const [galleryItems, setGalleryItems] = useState([]);

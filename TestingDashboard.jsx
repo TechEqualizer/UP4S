@@ -1,11 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { User } from './api/entities';
-import { Donation } from './api/entities';
-import { KidReferral } from './api/entities';
-import { GalleryItem } from './api/entities';
-import { NewsletterSubscriber } from './api/entities';
-import { FundraisingEvent } from './api/entities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

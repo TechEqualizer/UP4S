@@ -6,9 +6,8 @@ import DonationModal from './components/donation/DonationModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import VideoEmbed, { getVideoThumbnail } from '../components/gallery/VideoEmbed';
+import VideoEmbed, { getVideoThumbnail } from 'src/components/gallery/VideoEmbed';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 
 export default function Homepage() {
   const [featuredGallery, setFeaturedGallery] = useState([]);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { createPageUrl } from "@/index";
+import { createPageUrl } from "@/index.ts";
 import { User } from "@/api/entities";
 import { NewsletterSubscriber } from "@/api/entities";
 import { Heart, Camera, Users, Settings, BarChart3, Menu, X, TestTube } from "lucide-react";
