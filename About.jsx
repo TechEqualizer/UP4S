@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from './components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Heart, Camera, Users, Star, Award, Target, Tv, Building } from 'lucide-react';
 import { Link } from 'react-router-dom';

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { GalleryItem } from '@/api/entities';
 import { Heart, ArrowRight, Play, User, X } from 'lucide-react';
-import DonationModal from '../components/donation/DonationModal';
+import DonationModal from './components/donation/DonationModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';

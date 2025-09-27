@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DollarSign, Users, Camera, Mail, TrendingUp, Download, Eye, Plus, Edit, Trash2, Settings, Play, Target, Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
-import GalleryForm from '../components/admin/GalleryForm';
+import GalleryForm from './components/admin/GalleryForm';
 import { Progress } from '@/components/ui/progress';
 import { getVideoThumbnail } from '../components/gallery/VideoEmbed';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
