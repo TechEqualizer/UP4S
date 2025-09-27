@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import VideoEmbed, { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
 import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/index';
 
 export default function Homepage() {
   const [featuredGallery, setFeaturedGallery] = useState([]);
