@@ -21,8 +21,13 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await User.me();
-        setUser(currentUser);
+        const isAuthenticated = await User.isAuthenticated();
+        if (isAuthenticated) {
+          const currentUser = await User.me();
+          setUser(currentUser);
+        } else {
+          setUser(null);
+        }
       } catch (error) {
         // User not logged in or session expired - this is OK for public pages
         setUser(null);
