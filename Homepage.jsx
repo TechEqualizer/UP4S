@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GalleryItem } from '@/api/entities';
-import { Heart, ArrowRight, Play, User, X, Camera, Users, Target } from 'lucide-react';
+import { Heart, ArrowRight, Play, User, X, Camera, Users, Target, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -12,43 +12,54 @@ export default function Homepage() {
   const [featuredGallery, setFeaturedGallery] = useState([]);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const heroSlides = [
     {
-      image: "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/da49ace2d_Screenshot2025-08-24at92653AM.png",
-      title: "Rewrite Their Story on Film",
-      subtitle: "for Underserved Youth in Metro Detroit"
+      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1920&h=1080&fit=crop&crop=center",
+      title: "Rewrite Their Story",
+      subtitle: "Through Film & Media Arts",
+      description: "Empowering disadvantaged youth in Metro Detroit with professional filmmaking tools and mentorship."
     },
     {
-      image: "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/89dc3e318_Screenshot2025-08-24at92302AM.png",
+      image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1920&h=1080&fit=crop&crop=center",
       title: "From Street to Studio",
-      subtitle: "Empowering Youth Through Media Arts"
+      subtitle: "Building Brighter Futures",
+      description: "Providing a creative outlet and path away from trauma through professional media training."
     },
     {
-      image: "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/0b7884580_Screenshot2025-08-24at92947AM.png",
-      title: "Building Futures, One Frame at a Time",
-      subtitle: "A Community That Invests in Potential"
+      image: "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=1920&h=1080&fit=crop&crop=center",
+      title: "Every Voice Matters",
+      subtitle: "Every Story Counts",
+      description: "Helping young people tell their stories and build confidence through creative expression."
     }
+  ];
+
+  const impactStats = [
+    { number: "150+", label: "Youth Served", icon: Users },
+    { number: "75+", label: "Films Created", icon: Camera },
+    { number: "500+", label: "Families Impacted", icon: Heart },
+    { number: "2019", label: "Founded", icon: CheckCircle }
   ];
 
   const impactPillars = [
     {
       icon: Target,
       title: "Inspire",
-      description: "Ignite creativity and potential in youth facing socioeconomic barriers, providing a path away from trauma and street violence.",
+      description: "Ignite creativity and potential in youth facing socioeconomic barriers, providing hope and direction.",
       color: "from-blue-500 to-blue-600"
     },
     {
       icon: Camera,
       title: "Create", 
-      description: "Provide professional equipment, mentorship, and technical training in film, media, and performing arts, fostering real-world skills.",
+      description: "Provide professional equipment, mentorship, and technical training in film and media arts.",
       color: "from-purple-500 to-purple-600"
     },
     {
       icon: Users,
       title: "Celebrate",
-      description: "Showcase their powerful stories, building confidence, community connections, and a portfolio for their future.",
-      color: "from-yellow-500 to-yellow-600"
+      description: "Showcase their powerful stories, building confidence and community connections.",
+      color: "from-green-500 to-green-600"
     }
   ];
 
@@ -60,18 +71,21 @@ export default function Homepage() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentHeroSlide((prevSlide) => (prevSlide + 1) % heroSlides.length);
-    }, 5000);
+    }, 6000);
 
     return () => clearInterval(timer);
   }, [heroSlides.length]);
 
   const loadFeaturedGallery = async () => {
+    setIsLoading(true);
     try {
       const items = await GalleryItem.filter({ is_featured: true }, 'display_order', 6);
       setFeaturedGallery(items);
     } catch (error) {
       console.error('Error loading gallery:', error);
+      setFeaturedGallery([]);
     }
+    setIsLoading(false);
   };
 
   const getDisplayImage = (item) => {
@@ -110,15 +124,18 @@ export default function Homepage() {
                     index === currentHeroSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
                   }`}
                 >
-                  <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+                  <Badge className="mb-6 bg-blue-600/20 text-blue-200 border-blue-400/30">
+                    501(c)(3) Nonprofit Organization
+                  </Badge>
+                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
                     {slide.title}
                     <br />
                     <span className="bg-gradient-to-r from-yellow-400 to-yellow-500 bg-clip-text text-transparent">
                       {slide.subtitle}
                     </span>
                   </h1>
-                  <p className="text-lg md:text-xl text-gray-200 mb-12 max-w-4xl mx-auto leading-relaxed">
-                    Team UP4S is a 501(c)(3) nonprofit diverting at-risk youth from street violence and trauma through professional training in film, media, and performing arts. Your gift provides a creative outlet and a path to a brighter future.
+                  <p className="text-xl md:text-2xl text-gray-200 mb-12 max-w-4xl mx-auto leading-relaxed">
+                    {slide.description}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                     <Button
@@ -131,10 +148,11 @@ export default function Homepage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-white text-white hover:bg-white hover:text-gray-900 px-10 py-4 rounded-full text-lg font-semibold"
+                      className="border-white text-white hover:bg-white hover:text-gray-900 px-10 py-4 rounded-full text-lg font-semibold backdrop-blur-sm"
                     >
                       <Link to={createPageUrl("About")}>
                         Learn Our Story
+                        <ArrowRight className="w-5 h-5 ml-2" />
                       </Link>
                     </Button>
                   </div>
@@ -158,10 +176,32 @@ export default function Homepage() {
         </div>
       </section>
 
+      {/* Impact Stats */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {impactStats.map((stat, index) => (
+              <div
+                key={stat.label}
+                className="text-center animate-fade-in"
+                style={{ animationDelay: `${index * 0.2}s` }}
+              >
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <stat.icon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{stat.number}</div>
+                <div className="text-gray-600 font-medium">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Impact Pillars */}
       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
+            <Badge className="mb-6 bg-purple-100 text-purple-800">Our Approach</Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               How We Create <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Tomorrow's Voices</span>
             </h2>
@@ -193,6 +233,7 @@ export default function Homepage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-16">
             <div>
+              <Badge className="mb-4 bg-green-100 text-green-800">Success Stories</Badge>
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                 Dreams Made <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Real</span>
               </h2>
@@ -207,7 +248,17 @@ export default function Homepage() {
             </Button>
           </div>
 
-          {featuredGallery.length === 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {Array(6).fill(0).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="aspect-video bg-gray-200 rounded-2xl mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : featuredGallery.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Camera className="w-12 h-12 text-gray-400" />
@@ -272,8 +323,11 @@ export default function Homepage() {
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
         </div>
         <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8 text-center">
+          <Badge className="mb-6 bg-white/20 text-white border-white/30">
+            Make a Difference Today
+          </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Make a Difference?
+            Ready to Change Lives?
           </h2>
           <p className="text-xl mb-12 opacity-90 leading-relaxed">
             Your support doesn't just fund equipment; it provides a safe space, critical skills, and a new direction for youth in our community. Help us divert young people from the streets and into the studio.
@@ -289,10 +343,11 @@ export default function Homepage() {
             <Button
               asChild
               variant="outline"
-              className="border-white text-white hover:bg-white hover:text-blue-600 px-10 py-4 rounded-full text-lg font-semibold"
+              className="border-white text-white hover:bg-white hover:text-blue-600 px-10 py-4 rounded-full text-lg font-semibold backdrop-blur-sm"
             >
               <Link to={createPageUrl("ReferKid")}>
                 Refer a Child
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             </Button>
           </div>

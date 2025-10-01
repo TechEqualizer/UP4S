@@ -160,38 +160,38 @@ button:focus-visible {
 @layer utilities {
   /* UP4S Brand Colors */
   :root {
-    --up4s-blue: #004AAD;
-    --up4s-gold: #FFCC33;
+    --up4s-blue: #2563eb;
+    --up4s-gold: #f59e0b;
+    --up4s-red: #dc2626;
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, var(--up4s-blue), var(--up4s-gold));
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .btn-primary {
-    background: linear-gradient(135deg, var(--up4s-blue), #0056cc);
-    transition: all 0.3s ease;
+  /* Animation utilities */
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 74, 173, 0.3);
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
   }
 
-  .btn-gold {
-    background: linear-gradient(135deg, var(--up4s-gold), #ffd700);
-    transition: all 0.3s ease;
+  @keyframes slide-in-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
   }
 
-  .btn-gold:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(255, 204, 51, 0.4);
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
   }
 
-  /* Responsive text utilities */
+  /* Text utilities */
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -204,21 +204,5 @@ button:focus-visible {
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-  }
-
-  /* Improved mobile spacing */
-  @media (max-width: 640px) {
-    .container {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-  }
-
-  @keyframes slide-in-right {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
-  }
-  .animate-slide-in-right {
-    animation: slide-in-right 0.3s ease-out;
   }
 }
