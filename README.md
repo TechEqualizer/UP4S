@@ -106,7 +106,7 @@ Keep the CSV exports out of git: they contain donor and subscriber contact detai
 | Data | Public | Admins |
 | --- | --- | --- |
 | Gallery items, fundraising events and campaigns | read | full |
-| Kid referrals, newsletter subscribers | submit only | full |
+| Kid referrals, volunteer sign-ups, newsletter subscribers | submit only | full |
 | Donations | none (written by the Stripe functions) | read |
 | `public-media` bucket (gallery/event images) | read | full |
 | `referral-uploads` bucket (referral attachments) | upload only | read, delete |

@@ -141,6 +141,15 @@ export function StatusBadge({ tone = 'gray', children, title }) {
 export const PAYMENT_TONES = { completed: 'green', pending: 'yellow', expired: 'gray', failed: 'red', refunded: 'purple' };
 export const REFERRAL_STATUS_TONES = { pending: 'yellow', reviewing: 'purple', approved: 'blue', completed: 'green', declined: 'gray' };
 export const URGENCY_TONES = { low: 'gray', medium: 'yellow', high: 'orange', critical: 'red' };
+export const VOLUNTEER_STATUS_TONES = { new: 'yellow', contacted: 'blue', active: 'green', inactive: 'gray' };
+export const VOLUNTEER_STATUS_LABELS = { new: 'New', contacted: 'Contacted', active: 'Active volunteer', inactive: 'Inactive' };
+export const VOLUNTEER_INTEREST_LABELS = {
+  mentorship: 'Film & media mentorship',
+  events: 'Event support',
+  admin: 'Administrative support',
+  fundraising: 'Fundraising',
+  other: 'Other',
+};
 
 // Client-side pagination. Resets to page 1 whenever `resetKey` changes (e.g. filters).
 export function usePagination(items, pageSize = 25, resetKey) {

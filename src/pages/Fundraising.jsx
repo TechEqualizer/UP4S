@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FundraisingEvent } from '@/api/entities';
+import { FundraisingEvent, VolunteerInquiry } from '@/api/entities';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,17 +46,30 @@ export default function Fundraising() {
   const handleVolunteerSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    toast.success('Thanks for offering to help!', { description: 'We’ll be in touch soon.' });
-    setVolunteerForm({
-      name: '',
-      email: '',
-      phone: '',
-      interests: '',
-      experience: '',
-      availability: ''
-    });
-    setIsSubmitting(false);
+    try {
+      await VolunteerInquiry.create({
+        name: volunteerForm.name.trim(),
+        email: volunteerForm.email.trim().toLowerCase(),
+        phone: volunteerForm.phone.trim(),
+        interests: volunteerForm.interests,
+        experience: volunteerForm.experience.trim(),
+        availability: volunteerForm.availability.trim(),
+      });
+      toast.success('Thanks for offering to help!', { description: 'We’ll be in touch soon.' });
+      setVolunteerForm({
+        name: '',
+        email: '',
+        phone: '',
+        interests: '',
+        experience: '',
+        availability: ''
+      });
+    } catch (error) {
+      console.error('Volunteer signup error:', error);
+      toast.error('We couldn’t send your details', { description: 'Please try again, or email teamup4smi@gmail.com.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleEvent = (id) => {

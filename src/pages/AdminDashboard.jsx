@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Donation, KidReferral, GalleryItem, NewsletterSubscriber, FundraisingEvent } from '@/api/entities';
+import { Donation, KidReferral, GalleryItem, NewsletterSubscriber, FundraisingEvent, VolunteerInquiry } from '@/api/entities';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,7 +10,7 @@ import SmartImage from '@/components/ui/smart-image';
 import {
   DollarSign, Users, Camera, Mail, Download, Eye, Plus, Edit, Trash2, Play, Target,
   Calendar, MapPin, CalendarDays, Heart, ExternalLink, LayoutGrid, ListOrdered, RefreshCw, Star, Paperclip,
-  LayoutDashboard, Images, ArrowRight,
+  LayoutDashboard, Images, ArrowRight, HandHeart,
 } from 'lucide-react';
 import { format, isThisMonth } from 'date-fns';
 import GalleryForm from '@/components/admin/GalleryForm';
@@ -18,14 +18,16 @@ import GalleryReorderList from '@/components/admin/GalleryReorderList';
 import ReferralDetailModal from '@/components/admin/ReferralDetailModal';
 import EventForm from '@/components/admin/EventForm';
 import AdminShell from '@/components/admin/AdminShell';
+import VolunteerDetailModal from '@/components/admin/VolunteerDetailModal';
 import { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
 import { formatCurrency } from '@/lib/utils';
 import {
   StatCard, SectionHeader, SearchInput, EmptyState, StatusBadge, Pagination, usePagination, Panel, IconButton,
   downloadCsv, matchesSearch, PAYMENT_TONES, REFERRAL_STATUS_TONES, URGENCY_TONES,
+  VOLUNTEER_STATUS_TONES, VOLUNTEER_STATUS_LABELS, VOLUNTEER_INTEREST_LABELS,
 } from '@/components/admin/dashboard-ui';
 
-const TABS = ['overview', 'referrals', 'donations', 'events', 'gallery', 'subscribers'];
+const TABS = ['overview', 'referrals', 'volunteers', 'donations', 'events', 'gallery', 'subscribers'];
 const URGENCY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const MAX_ROWS = 1000;
 
@@ -47,6 +49,7 @@ export default function AdminDashboard() {
   const [gallery, setGallery] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
   const [events, setEvents] = useState([]);
+  const [volunteers, setVolunteers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
@@ -64,6 +67,11 @@ export default function AdminDashboard() {
   const [referralStatus, setReferralStatus] = useState('open');
   const [referralUrgency, setReferralUrgency] = useState('all');
 
+  // Volunteers
+  const [selectedVolunteer, setSelectedVolunteer] = useState(null);
+  const [volunteerSearch, setVolunteerSearch] = useState('');
+  const [volunteerStatus, setVolunteerStatus] = useState('all');
+
   // Donations / subscribers
   const [donationSearch, setDonationSearch] = useState('');
   const [donationStatus, setDonationStatus] = useState('all');
@@ -77,12 +85,13 @@ export default function AdminDashboard() {
     setIsLoading(true);
     setLoadError('');
     try {
-      const [donationsData, referralsData, galleryData, subscribersData, eventsData] = await Promise.all([
+      const [donationsData, referralsData, galleryData, subscribersData, eventsData, volunteersData] = await Promise.all([
         Donation.list('-created_date', MAX_ROWS),
         KidReferral.list('-created_date', MAX_ROWS),
         GalleryItem.list('display_order', MAX_ROWS),
         NewsletterSubscriber.list('-created_date', MAX_ROWS),
         FundraisingEvent.list('-event_date', MAX_ROWS),
+        VolunteerInquiry.list('-created_date', MAX_ROWS),
       ]);
       setDonations(donationsData);
       setReferrals(referralsData);
@@ -92,6 +101,7 @@ export default function AdminDashboard() {
       ));
       setSubscribers(subscribersData);
       setEvents(eventsData);
+      setVolunteers(volunteersData);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       setLoadError(error?.message || 'Could not load dashboard data.');
@@ -115,6 +125,7 @@ export default function AdminDashboard() {
     .filter((e) => e.is_active && e.event_date && new Date(e.event_date) >= now)
     .sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
   const activeSubscribers = subscribers.filter((s) => s.is_active);
+  const newVolunteers = volunteers.filter((v) => v.status === 'new');
 
   const filteredReferrals = referrals.filter((r) => {
     const statusMatch =
@@ -129,10 +140,15 @@ export default function AdminDashboard() {
     matchesSearch(donationSearch, d.donor_name, d.donor_email, eventTitles[d.event_id])
   );
   const filteredSubscribers = subscribers.filter((s) => matchesSearch(subscriberSearch, s.email, s.first_name));
+  const filteredVolunteers = volunteers.filter((v) =>
+    (volunteerStatus === 'all' || v.status === volunteerStatus) &&
+    matchesSearch(volunteerSearch, v.name, v.email, v.phone, v.experience, v.availability, VOLUNTEER_INTEREST_LABELS[v.interests])
+  );
 
   const referralPages = usePagination(filteredReferrals, 25, `${referralSearch}|${referralStatus}|${referralUrgency}`);
   const donationPages = usePagination(filteredDonations, 25, `${donationSearch}|${donationStatus}`);
   const subscriberPages = usePagination(filteredSubscribers, 50, subscriberSearch);
+  const volunteerPages = usePagination(filteredVolunteers, 25, `${volunteerSearch}|${volunteerStatus}`);
 
   // ---------------------------------------------------------------------------
   // Events
@@ -291,6 +307,19 @@ export default function AdminDashboard() {
       { label: 'Attachments', value: (r) => (r.uploaded_files || []).length },
     ], filteredReferrals);
 
+  const exportVolunteers = () =>
+    downloadCsv('volunteers', [
+      { label: 'Signed up', value: (v) => formatDate(v.created_date, 'yyyy-MM-dd HH:mm') },
+      { label: 'Name', value: (v) => v.name },
+      { label: 'Email', value: (v) => v.email },
+      { label: 'Phone', value: (v) => v.phone },
+      { label: 'Interest', value: (v) => VOLUNTEER_INTEREST_LABELS[v.interests] ?? '' },
+      { label: 'Experience', value: (v) => v.experience },
+      { label: 'Availability', value: (v) => v.availability },
+      { label: 'Status', value: (v) => VOLUNTEER_STATUS_LABELS[v.status] ?? v.status },
+      { label: 'Admin notes', value: (v) => v.admin_notes },
+    ], filteredVolunteers);
+
   const exportSubscribers = () =>
     downloadCsv('newsletter-subscribers', [
       { label: 'Email', value: (s) => s.email },
@@ -308,6 +337,7 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'referrals', label: 'Referrals', icon: Users, count: count(openReferrals.length) },
+    { id: 'volunteers', label: 'Volunteers', icon: HandHeart, count: count(newVolunteers.length) },
     { id: 'donations', label: 'Donations', icon: Heart, count: count(donations.length) },
     { id: 'events', label: 'Events', icon: CalendarDays, count: count(events.length) },
     { id: 'gallery', label: 'Gallery', icon: Images, count: count(gallery.length) },
@@ -327,6 +357,15 @@ export default function AdminDashboard() {
       description: `${referrals.length} total · ${pendingReferrals.length} new since last review`,
       actions: (
         <Button size="sm" variant="outline" onClick={exportReferrals} disabled={filteredReferrals.length === 0}>
+          <Download className="mr-1.5 h-4 w-4" /> Export
+        </Button>
+      ),
+    },
+    volunteers: {
+      title: 'Volunteers',
+      description: `${volunteers.length} sign-ups · ${newVolunteers.length} new`,
+      actions: (
+        <Button size="sm" variant="outline" onClick={exportVolunteers} disabled={filteredVolunteers.length === 0}>
           <Download className="mr-1.5 h-4 w-4" /> Export
         </Button>
       ),
@@ -425,7 +464,7 @@ export default function AdminDashboard() {
       {/* Overview */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
             <StatCard
               label="Raised, all time"
               value={isLoading ? '—' : formatCurrency(raisedAllTime)}
@@ -450,12 +489,21 @@ export default function AdminDashboard() {
               onClick={() => { setReferralStatus('open'); setActiveTab('referrals'); }}
             />
             <StatCard
+              label="New volunteers"
+              value={isLoading ? '—' : newVolunteers.length}
+              detail={`${volunteers.length} sign-up${volunteers.length === 1 ? '' : 's'} in total`}
+              icon={HandHeart}
+              accent="text-purple-700 bg-purple-50"
+              onClick={() => { setVolunteerStatus('new'); setActiveTab('volunteers'); }}
+            />
+            <StatCard
               label="Subscribers"
               value={isLoading ? '—' : activeSubscribers.length}
               detail={subscribers.length > activeSubscribers.length ? `${subscribers.length - activeSubscribers.length} unsubscribed` : 'All active'}
               icon={Mail}
               accent="text-orange-600 bg-orange-50"
               onClick={() => setActiveTab('subscribers')}
+              className="col-span-2 lg:col-span-1"
             />
           </div>
 
@@ -695,6 +743,86 @@ export default function AdminDashboard() {
                 </TableBody>
               </Table>
               <Pagination {...referralPages} />
+            </>
+          )}
+        </Panel>
+      )}
+
+      {/* Volunteers */}
+      {activeTab === 'volunteers' && (
+        <Panel>
+          <div className={toolbar}>
+            <SearchInput
+              value={volunteerSearch}
+              onChange={setVolunteerSearch}
+              placeholder="Search name, email, skills or availability"
+              label="Search volunteers"
+              className="sm:max-w-sm sm:flex-1"
+            />
+            <Select value={volunteerStatus} onValueChange={setVolunteerStatus}>
+              <SelectTrigger className="h-9 w-44" aria-label="Filter by volunteer status"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {Object.entries(VOLUNTEER_STATUS_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {filteredVolunteers.length === 0 ? (
+            <div className="p-6">
+              <EmptyState
+                icon={HandHeart}
+                title={volunteers.length === 0 ? 'No volunteers yet' : 'No volunteers match'}
+                description={volunteers.length === 0
+                  ? 'People who fill in the volunteer form on the Support Us page will appear here.'
+                  : 'Try a different search or filter.'}
+              />
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/70 hover:bg-gray-50/70">
+                    <TableHead className="min-w-[14rem]">Volunteer</TableHead>
+                    <TableHead>Interest</TableHead>
+                    <TableHead className="min-w-[14rem]">Availability</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Signed up</TableHead>
+                    <TableHead className="text-right"><span className="sr-only">Actions</span></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {volunteerPages.pageItems.map((volunteer) => (
+                    <TableRow key={volunteer.id} className="cursor-pointer" onClick={() => setSelectedVolunteer(volunteer)}>
+                      <TableCell>
+                        <p className="font-medium text-gray-900">{volunteer.name}</p>
+                        <p className="text-xs text-gray-500">{volunteer.email}</p>
+                        {volunteer.phone && <p className="text-xs text-gray-500">{volunteer.phone}</p>}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-gray-700">
+                        {VOLUNTEER_INTEREST_LABELS[volunteer.interests] ?? <span className="text-gray-400">—</span>}
+                      </TableCell>
+                      <TableCell>
+                        <p className="max-w-xs text-gray-600 line-clamp-2">{volunteer.availability || <span className="text-gray-400">—</span>}</p>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge tone={VOLUNTEER_STATUS_TONES[volunteer.status]}>{VOLUNTEER_STATUS_LABELS[volunteer.status] ?? volunteer.status}</StatusBadge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-gray-600">{formatDate(volunteer.created_date)}</TableCell>
+                      <TableCell className="text-right">
+                        <IconButton
+                          label={`Open volunteer ${volunteer.name}`}
+                          icon={Eye}
+                          onClick={(e) => { e.stopPropagation(); setSelectedVolunteer(volunteer); }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination {...volunteerPages} />
             </>
           )}
         </Panel>
@@ -1025,6 +1153,19 @@ export default function AdminDashboard() {
           toast.success('Referral updated');
         }}
       />
+
+      {selectedVolunteer && (
+        <VolunteerDetailModal
+          key={selectedVolunteer.id}
+          volunteer={selectedVolunteer}
+          onClose={() => setSelectedVolunteer(null)}
+          onUpdate={() => {
+            setSelectedVolunteer(null);
+            loadDashboardData();
+            toast.success('Volunteer updated');
+          }}
+        />
+      )}
     </AdminShell>
   );
 }

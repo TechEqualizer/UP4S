@@ -74,3 +74,4 @@ export const GalleryItem = createEntity('gallery_items');
 export const NewsletterSubscriber = createEntity('newsletter_subscribers', { publicInsert: true });
 export const FundraisingCampaign = createEntity('fundraising_campaigns');
 export const FundraisingEvent = createEntity('fundraising_events');
+export const VolunteerInquiry = createEntity('volunteer_inquiries', { publicInsert: true });
