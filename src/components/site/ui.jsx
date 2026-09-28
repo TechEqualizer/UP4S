@@ -52,10 +52,11 @@ export function Section({ className, children, id, tone = 'white', ...props }) {
 export function Eyebrow({ children, tone = 'light', className }) {
   return (
     <p className={cn(
-      'text-xs font-semibold uppercase tracking-[0.18em]',
+      'inline-flex items-center gap-2.5 font-sans text-xs font-bold uppercase tracking-[0.22em]',
       tone === 'dark' ? 'text-yellow-400' : 'text-blue-600',
       className
     )}>
+      <span aria-hidden="true" className={cn('h-px w-6', tone === 'dark' ? 'bg-yellow-400/70' : 'bg-blue-600/60')} />
       {children}
     </p>
   );
@@ -73,14 +74,14 @@ export function SectionHeading({ eyebrow, title, lede, align = 'center', tone = 
       <div className={cn(!centered && 'max-w-2xl')}>
         {eyebrow && <Eyebrow tone={tone} className="mb-3">{eyebrow}</Eyebrow>}
         <H className={cn(
-          'text-balance font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]',
+          'font-display text-display-lg font-bold',
           tone === 'dark' ? 'text-white' : 'text-gray-900'
         )}>
           {title}
         </H>
         {lede && (
           <p className={cn(
-            'mt-4 text-pretty text-lg leading-relaxed',
+            'mt-5 text-pretty text-lg leading-relaxed sm:text-[1.1875rem]',
             tone === 'dark' ? 'text-gray-300' : 'text-gray-600'
           )}>
             {lede}
@@ -106,7 +107,7 @@ export function PageHeader({ eyebrow, title, lede, children, className }) {
       />
       <Container className="py-16 text-center sm:py-24">
         {eyebrow && <Eyebrow className="mb-4">{eyebrow}</Eyebrow>}
-        <h1 className="mx-auto max-w-4xl text-balance font-display text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+        <h1 className="mx-auto max-w-4xl font-display text-display-xl font-bold text-gray-900">
           {title}
         </h1>
         {lede && <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-gray-600 sm:text-xl">{lede}</p>}
@@ -116,9 +117,11 @@ export function PageHeader({ eyebrow, title, lede, children, className }) {
   );
 }
 
-// Accent text inside headings, in the brand blue.
-export function Highlight({ children, tone = 'light' }) {
-  return <span className={tone === 'dark' ? 'text-yellow-400' : 'text-blue-600'}>{children}</span>;
+// Serif italic accent for a word or phrase inside a display heading.
+// tone: 'brand' (blue), 'gold' (yellow, for dark backgrounds) or 'inherit'.
+export function Accent({ children, tone = 'brand' }) {
+  const colors = { brand: 'text-blue-600', gold: 'text-yellow-400', inherit: '' };
+  return <em className={cn('accent', colors[tone])}>{children}</em>;
 }
 
 export function Surface({ as: Comp = 'div', className, children, ...props }) {
@@ -140,7 +143,7 @@ export function CtaBand({ eyebrow, title, lede, children, footer }) {
         <div aria-hidden="true" className="absolute -top-24 left-1/2 -z-10 h-72 w-[48rem] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
         <div aria-hidden="true" className="absolute inset-0 -z-10 opacity-20 [background-image:radial-gradient(rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
         {eyebrow && <Eyebrow tone="dark" className="mb-4">{eyebrow}</Eyebrow>}
-        <h2 className="mx-auto max-w-2xl text-balance font-display text-3xl font-bold tracking-tight text-white sm:text-5xl">{title}</h2>
+        <h2 className="mx-auto max-w-3xl font-display text-display-lg font-bold text-white">{title}</h2>
         {lede && <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-blue-100">{lede}</p>}
         {children && <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">{children}</div>}
         {footer && <div className="mt-10 flex flex-col items-center justify-center gap-x-8 gap-y-3 text-sm text-blue-100/90 sm:flex-row">{footer}</div>}

@@ -4,7 +4,7 @@ import { Heart, Camera, Users, Target, Tv, Building, ArrowRight, Quote } from 'l
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/index';
 import CountUp from '@/components/site/CountUp';
-import { Container, Section, SectionHeading, Eyebrow, CtaBand, Surface, ctaClass } from '@/components/site/ui';
+import { Container, Section, SectionHeading, Eyebrow, CtaBand, Surface, Accent, ctaClass } from '@/components/site/ui';
 
 const FOUNDER_PHOTO = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/cc6b4c44b_Screenshot2025-08-24at92111AM.png";
 const EVENT_PHOTO = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/f4939dbd3_Screenshot2025-08-24at92510AM.png";
@@ -73,8 +73,8 @@ export default function About() {
         <Container className="grid grid-cols-1 items-center gap-12 py-16 sm:py-24 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-7">
             <Eyebrow className="mb-4">Unlimited Potential 4 Success</Eyebrow>
-            <h1 className="text-balance font-display text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-              Founded on a dream, built for our community
+            <h1 className="font-display text-display-xl font-bold text-gray-900">
+              Founded on a dream, <Accent>built for our community</Accent>
             </h1>
             <div className="mt-6 max-w-xl space-y-4 text-lg leading-relaxed text-gray-600">
               <p>
@@ -122,7 +122,7 @@ export default function About() {
                 className={`flex flex-col px-4 py-10 text-center ${index < 2 ? 'border-b border-gray-100 lg:border-b-0' : ''} ${index % 2 === 0 ? 'border-r border-gray-100 lg:border-r-0' : ''}`}
               >
                 <dt className="order-2 mt-2 text-sm font-medium text-gray-500">{stat.label}</dt>
-                <dd className="order-1 font-display text-4xl font-bold tracking-tight tabular-nums text-gray-900"><CountUp value={stat.number} from={/^\d{4}$/.test(stat.number) ? 2000 : 0} delay={index * 120} /></dd>
+                <dd className="order-1 font-display text-5xl font-extrabold tracking-[-0.025em] tabular-nums text-gray-900"><CountUp value={stat.number} from={/^\d{4}$/.test(stat.number) ? 2000 : 0} delay={index * 120} /></dd>
               </div>
             ))}
           </dl>
@@ -134,7 +134,7 @@ export default function About() {
         <Container>
           <SectionHeading
             eyebrow="Why we do it"
-            title="Creativity can change a child’s story"
+            title={<>Creativity can change <Accent>a child’s story</Accent></>}
             lede="When a child faces poverty, trauma or systemic barriers, their world can feel hopeless. Professional skills and a supportive, inclusive community help underserved youth process their experiences, discover their potential and build a foundation for a successful future."
           />
 
@@ -159,7 +159,7 @@ export default function About() {
               </div>
               <blockquote className="absolute -bottom-2 left-4 right-4 rounded-2xl bg-gray-950 px-6 py-5 text-white shadow-xl sm:left-auto sm:right-[-1rem] sm:w-72 lg:-bottom-8">
                 <Quote className="mb-2 h-5 w-5 text-yellow-400" aria-hidden="true" />
-                <p className="font-display text-lg font-semibold leading-snug">Every child deserves to tell their story.</p>
+                <p className="font-serif text-2xl italic leading-snug">Every child deserves to tell their story.</p>
               </blockquote>
             </figure>
           </div>
@@ -211,7 +211,7 @@ export default function About() {
 
       <CtaBand
         eyebrow="Join us"
-        title="Invest in our community’s youth"
+        title={<>Invest in our <Accent tone="gold">community’s youth</Accent></>}
         lede="Your support provides professional skills, mentorship and a safe alternative to the streets for the next generation of creators and leaders."
       >
         <button type="button" onClick={openDonate} className={ctaClass('light', 'lg')}>

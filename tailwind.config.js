@@ -5,8 +5,16 @@ module.exports = {
   theme: {
   	extend: {
   		fontFamily: {
-  			sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-  			display: ['"Plus Jakarta Sans"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+  			sans: ['"Figtree Variable"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  			display: ['"Bricolage Grotesque Variable"', '"Figtree Variable"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  			serif: ['"Instrument Serif"', 'ui-serif', 'Georgia', 'serif']
+  		},
+  		// Fluid display sizes: scale smoothly from phone to desktop.
+  		fontSize: {
+  			'display-2xl': ['clamp(2.75rem, 1.4rem + 5.6vw, 6rem)', { lineHeight: '0.98', letterSpacing: '-0.022em' }],
+  			'display-xl': ['clamp(2.5rem, 1.6rem + 3.8vw, 4.75rem)', { lineHeight: '1.02', letterSpacing: '-0.02em' }],
+  			'display-lg': ['clamp(2rem, 1.45rem + 2.3vw, 3.5rem)', { lineHeight: '1.06', letterSpacing: '-0.018em' }],
+  			'display-md': ['clamp(1.5rem, 1.25rem + 1vw, 2.125rem)', { lineHeight: '1.15', letterSpacing: '-0.012em' }]
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

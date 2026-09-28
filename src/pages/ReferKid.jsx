@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Heart, Users, Camera, CheckCircle, Upload, AlertTriangle, Shield, Loader2 } from 'lucide-react';
-import { Container, PageHeader, Surface, ctaClass } from '@/components/site/ui';
+import { Container, PageHeader, Surface, Accent, ctaClass } from '@/components/site/ui';
 import { UploadReferralFile } from '@/api/integrations';
 
 export default function ReferKid() {
@@ -261,7 +261,7 @@ export default function ReferKid() {
     <div className="min-h-screen bg-white">
       <PageHeader
         eyebrow="Refer a kid"
-        title="Unlock a child’s creative potential"
+        title={<>Unlock a child’s <Accent>creative potential</Accent></>}
         lede="Know a young person whose voice deserves to be heard? Refer them for professional filmmaking tools and mentorship that help them share their story."
       />
 
