@@ -41,7 +41,11 @@ export default function Login() {
 
     if (signInError) {
       console.error('Sign-in error:', signInError);
-      setError('Could not send a sign-in link. Check the address, or ask an admin to add your account.');
+      setError(
+        signInError.status === 429
+          ? 'Too many sign-in emails were requested recently. Please wait a while and try again, or use the most recent link already in your inbox.'
+          : 'Could not send a sign-in link. Check the address, or ask an admin to add your account.'
+      );
       setStatus('idle');
       return;
     }
