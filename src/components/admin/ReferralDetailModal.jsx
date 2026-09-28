@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { KidReferral } from '@/api/entities';
+import { getReferralFileUrl } from '@/api/integrations';
 
 export default function ReferralDetailModal({ referral, isOpen, onClose, onUpdate }) {
   const [adminNotes, setAdminNotes] = useState(referral?.admin_notes || '');
@@ -81,8 +82,23 @@ export default function ReferralDetailModal({ referral, isOpen, onClose, onUpdat
     setIsSaving(false);
   };
 
-  const handleFileDownload = (file) => {
-    window.open(file.url, '_blank');
+  const handleFileDownload = async (file) => {
+    // Files migrated from Base44 carry a public url; new ones a private storage path.
+    if (!file.path) {
+      window.open(file.url, '_blank');
+      return;
+    }
+    // Open the tab synchronously so popup blockers allow it, then point it at the signed URL.
+    const tab = window.open('', '_blank');
+    try {
+      const url = await getReferralFileUrl(file.path);
+      if (tab) tab.location.href = url;
+      else window.location.href = url;
+    } catch (error) {
+      tab?.close();
+      console.error('Error opening referral file:', error);
+      alert('Could not open this file. Please try again.');
+    }
   };
 
   return (

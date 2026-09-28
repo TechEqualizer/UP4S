@@ -1,0 +1,8 @@
+# Settings used by the Supabase CLI (`supabase functions deploy`, `supabase db push`).
+
+[functions.create-stripe-checkout]
+verify_jwt = true
+
+# Stripe calls this directly; it authenticates with the Stripe signature instead.
+[functions.stripe-webhook]
+verify_jwt = false

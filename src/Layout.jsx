@@ -4,10 +4,13 @@ import { createPageUrl } from "@/index.ts";
 import { NewsletterSubscriber } from "@/api/entities";
 import { Heart, Menu, X, Mail, Phone, MapPin } from "lucide-react";
 import DonationModal from "@/components/donation/DonationModal";
+import { useAuth, signOut } from "@/lib/auth";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
-  const isAdminPage = currentPageName?.startsWith('Admin') || currentPageName === 'TestingDashboard';
+  const isAdminPage = currentPageName?.startsWith('Admin') ||
+    ['TestingDashboard', 'ProductionChecklist', 'Login'].includes(currentPageName);
+  const { session } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
 
@@ -73,12 +76,22 @@ export default function Layout({ children, currentPageName }) {
               </Link>
             </div>
 
-            <Link
-              to={createPageUrl("Homepage")}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-full font-medium text-sm hover:from-blue-700 hover:to-blue-800 transition-all"
-            >
-              View Site
-            </Link>
+            <div className="flex items-center gap-4">
+              {session && (
+                <button
+                  onClick={signOut}
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                >
+                  Sign out
+                </button>
+              )}
+              <Link
+                to={createPageUrl("Homepage")}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-full font-medium text-sm hover:from-blue-700 hover:to-blue-800 transition-all"
+              >
+                View Site
+              </Link>
+            </div>
           </div>
         </nav>
         <main>{children}</main>

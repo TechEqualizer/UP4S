@@ -22,6 +22,10 @@ import DonationSuccess from "./DonationSuccess";
 
 import TestingDashboard from "./TestingDashboard";
 
+import Login from "./Login";
+
+import { AuthProvider, RequireAdmin } from "@/lib/auth";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -47,6 +51,8 @@ const PAGES = {
     DonationSuccess: DonationSuccess,
     
     TestingDashboard: TestingDashboard,
+    
+    Login: Login,
     
 }
 
@@ -83,9 +89,9 @@ function PagesContent() {
                 
                 <Route path="/About" element={<About />} />
                 
-                <Route path="/AdminDashboard" element={<AdminDashboard />} />
+                <Route path="/AdminDashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
                 
-                <Route path="/ProductionChecklist" element={<ProductionChecklist />} />
+                <Route path="/ProductionChecklist" element={<RequireAdmin><ProductionChecklist /></RequireAdmin>} />
                 
                 <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
                 
@@ -95,7 +101,9 @@ function PagesContent() {
                 
                 <Route path="/DonationSuccess" element={<DonationSuccess />} />
                 
-                <Route path="/TestingDashboard" element={<TestingDashboard />} />
+                <Route path="/TestingDashboard" element={<RequireAdmin><TestingDashboard /></RequireAdmin>} />
+                
+                <Route path="/Login" element={<Login />} />
                 
             </Routes>
         </Layout>
@@ -105,7 +113,9 @@ function PagesContent() {
 export default function Pages() {
     return (
         <Router>
-            <PagesContent />
+            <AuthProvider>
+                <PagesContent />
+            </AuthProvider>
         </Router>
     );
 }

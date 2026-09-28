@@ -1,6 +1,11 @@
-import { base44 } from './base44Client';
+import { supabase } from './supabaseClient';
 
-// Resolve lazily: @base44/sdk 0.1.x has no `functions` module, so reading it at
-// import time crashes every page that (transitively) imports this file.
-export const createStripeCheckout = (...args) => base44.functions.createStripeCheckout(...args);
-export const stripeWebhook = (...args) => base44.functions.stripeWebhook(...args);
+// Calls the create-stripe-checkout edge function (supabase/functions).
+// Resolves to { checkout_url }.
+export async function createStripeCheckout(checkoutData) {
+  const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+    body: checkoutData,
+  });
+  if (error) throw error;
+  return data;
+}

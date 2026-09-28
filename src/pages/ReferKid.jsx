@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Heart, Users, Camera, Star, CheckCircle, Upload, AlertTriangle, Info, Shield } from 'lucide-react';
-import { UploadFile } from '@/api/integrations';
+import { UploadReferralFile } from '@/api/integrations';
 
 export default function ReferKid() {
   const [formData, setFormData] = useState({
@@ -133,10 +133,10 @@ export default function ReferKid() {
       }
 
       try {
-        const { file_url } = await UploadFile({ file });
+        const { path } = await UploadReferralFile({ file });
         setUploadedFiles((prev) => [...prev, {
           name: file.name,
-          url: file_url,
+          path,
           size: file.size
         }]);
         setUploadProgress(((i + 1) / files.length) * 100);
