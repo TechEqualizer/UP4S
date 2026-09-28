@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { GalleryItem } from '@/api/entities';
-import { Heart, ArrowRight, Play, User, X, Camera, Users, Target, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import VideoEmbed, { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
-import SmartImage from '@/components/ui/smart-image';
+import { Heart, ArrowRight, Camera, Users, Target, ShieldCheck, MapPin, Clapperboard } from 'lucide-react';
+import { MediaCard, MediaLightbox } from '@/components/gallery/MediaCard';
+import { Container, Section, SectionHeading, CtaBand, ctaClass } from '@/components/site/ui';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/index';
 
@@ -40,30 +37,27 @@ export default function Homepage() {
   ];
 
   const impactStats = [
-    { number: "150+", label: "Youth Served", icon: Users },
-    { number: "75+", label: "Films Created", icon: Camera },
-    { number: "500+", label: "Families Impacted", icon: Heart },
-    { number: "2019", label: "Founded", icon: CheckCircle }
+    { number: "150+", label: "Youth served" },
+    { number: "75+", label: "Films created" },
+    { number: "500+", label: "Families impacted" },
+    { number: "2019", label: "Serving Detroit since" }
   ];
 
   const impactPillars = [
     {
       icon: Target,
       title: "Inspire",
-      description: "Ignite creativity and potential in youth facing socioeconomic barriers, providing hope and direction.",
-      color: "from-blue-500 to-blue-600"
+      description: "Ignite creativity and potential in youth facing socioeconomic barriers, providing hope and direction."
     },
     {
-      icon: Camera,
+      icon: Clapperboard,
       title: "Create", 
-      description: "Provide professional equipment, mentorship, and technical training in film and media arts.",
-      color: "from-purple-500 to-purple-600"
+      description: "Provide professional equipment, mentorship, and technical training in film and media arts."
     },
     {
       icon: Users,
       title: "Celebrate",
-      description: "Showcase their powerful stories, building confidence and community connections.",
-      color: "from-green-500 to-green-600"
+      description: "Showcase their powerful stories, building confidence and community connections."
     }
   ];
 
@@ -95,19 +89,13 @@ export default function Homepage() {
     setIsLoading(false);
   };
 
-  const getDisplayImage = (item) => {
-    if (item.is_external_url && item.media_type === 'video') {
-      const thumbnail = getVideoThumbnail(item.media_url);
-      return thumbnail?.thumbnail || item.media_url;
-    }
-    return item.media_url;
-  };
+  const openDonate = () => window.dispatchEvent(new CustomEvent('openDonationModal'));
 
   return (
     <div className="overflow-hidden">
-      {/* Hero Section */}
+      {/* Hero */}
       <section
-        className="relative min-h-[36rem] h-[calc(100svh-5rem)] flex items-center justify-center bg-gray-900 overflow-hidden"
+        className="relative isolate flex min-h-[36rem] h-[calc(100svh-5rem)] max-h-[56rem] items-end overflow-hidden bg-gray-950"
         aria-roledescription="carousel"
         aria-label="Highlights"
         onMouseEnter={() => setIsHeroPaused(true)}
@@ -115,338 +103,189 @@ export default function Homepage() {
         onFocus={() => setIsHeroPaused(true)}
         onBlur={() => setIsHeroPaused(false)}
       >
-        {/* Slides container */}
-        {heroSlides.map((slide, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === currentHeroSlide ? 'opacity-100 z-10' : 'opacity-0'
-            }`}
-          >
-            {/* Background Image and Overlay */}
+        {heroSlides.map((slide, index) => {
+          const active = index === currentHeroSlide;
+          return (
             <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${slide.image})`, backgroundPosition: slide.position }}
+              key={index}
+              aria-hidden={!active}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${active ? 'z-10 opacity-100' : 'opacity-0'}`}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
-            </div>
+              <div
+                className={`absolute inset-0 bg-cover transition-transform duration-[7000ms] ease-out motion-reduce:transition-none ${active ? 'scale-105' : 'scale-100'}`}
+                style={{ backgroundImage: `url(${slide.image})`, backgroundPosition: slide.position }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/55 to-gray-950/20" />
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-950/70 via-gray-950/20 to-transparent" />
 
-            {/* Slide Content */}
-            <div className="relative h-full flex items-center justify-center">
-              <div className="max-w-6xl mx-auto px-6 lg:px-8 text-center">
+              <Container className="relative flex h-full items-end pb-24 sm:pb-28">
                 <div
-                  className={`transition-all duration-1000 ease-in-out ${
-                    index === currentHeroSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
-                  }`}
+                  className={`max-w-3xl transition-all duration-1000 ease-out ${active ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                 >
-                  <Badge className="mb-6 bg-blue-600/20 text-blue-200 border-blue-400/30">
-                    501(c)(3) Nonprofit Organization
-                  </Badge>
-                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+                  <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
+                    <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" aria-hidden="true" />
+                    501(c)(3) nonprofit · Metro Detroit
+                  </p>
+                  <h1 className="text-balance font-display text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
                     {slide.title}
-                    <br />
-                    <span className="bg-gradient-to-r from-yellow-400 to-yellow-500 bg-clip-text text-transparent">
-                      {slide.subtitle}
-                    </span>
+                    <span className="block text-yellow-400">{slide.subtitle}</span>
                   </h1>
-                  <p className="text-xl md:text-2xl text-gray-200 mb-12 max-w-4xl mx-auto leading-relaxed">
+                  <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-gray-200 sm:text-xl">
                     {slide.description}
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                    <Button
-                      onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-                      className="h-auto bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-10 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300 shadow-2xl"
-                    >
-                      <Heart className="w-5 h-5 mr-2" />
-                      Make Tax-Deductible Gift
-                    </Button>
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="h-auto bg-transparent border-white text-white hover:bg-white hover:text-gray-900 px-10 py-4 rounded-full text-lg font-semibold backdrop-blur-sm"
-                    >
-                      <Link to={createPageUrl("About")} className="inline-flex items-center">
-                        Learn Our Story
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </Link>
-                    </Button>
+                  <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+                    <button type="button" onClick={openDonate} tabIndex={active ? 0 : -1} className={ctaClass('primary', 'lg')}>
+                      <Heart className="h-5 w-5" aria-hidden="true" />
+                      Make a tax-deductible gift
+                    </button>
+                    <Link to={createPageUrl("About")} tabIndex={active ? 0 : -1} className={ctaClass('ghostLight', 'lg')}>
+                      Learn our story
+                      <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                    </Link>
                   </div>
                 </div>
-              </div>
+              </Container>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Slide indicators */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-20">
-          {heroSlides.map((_, index) => (
+        <Container className="absolute inset-x-0 bottom-8 z-20 flex gap-2">
+          {heroSlides.map((slide, index) => (
             <button
               key={index}
+              type="button"
               onClick={() => setCurrentHeroSlide(index)}
-              aria-label={`Show slide ${index + 1}`}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentHeroSlide ? 'bg-white scale-125' : 'bg-white/40'
-              }`}
-            />
+              aria-label={`Show slide ${index + 1}: ${slide.title}`}
+              aria-current={index === currentHeroSlide}
+              className="group py-2 focus-visible:outline-none"
+            >
+              <span className={`block h-1 rounded-full transition-all duration-500 group-focus-visible:ring-2 group-focus-visible:ring-white ${
+                index === currentHeroSlide ? 'w-10 bg-white' : 'w-5 bg-white/35 group-hover:bg-white/60'
+              }`} />
+            </button>
           ))}
-        </div>
+        </Container>
       </section>
 
-      {/* Impact Stats */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+      {/* Impact stats */}
+      <div className="relative z-20 border-b border-gray-100 bg-white">
+        <Container>
+          <dl className="grid grid-cols-2 divide-gray-100 lg:grid-cols-4 lg:divide-x">
             {impactStats.map((stat, index) => (
               <div
                 key={stat.label}
-                className="text-center animate-fade-in"
-                style={{ animationDelay: `${index * 0.2}s` }}
+                className={`flex flex-col px-4 py-10 text-center sm:py-12 ${index < 2 ? 'border-b border-gray-100 lg:border-b-0' : ''} ${index % 2 === 0 ? 'border-r border-gray-100 lg:border-r-0' : ''}`}
               >
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="w-8 h-8 text-white" />
-                </div>
-                <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{stat.number}</div>
-                <div className="text-gray-600 font-medium">{stat.label}</div>
+                <dt className="order-2 mt-2 text-sm font-medium text-gray-500">{stat.label}</dt>
+                <dd className="order-1 font-display text-4xl font-bold tracking-tight text-gray-900 tabular-nums sm:text-5xl">{stat.number}</dd>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
+          </dl>
+        </Container>
+      </div>
 
-      {/* Impact Pillars */}
-      <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge className="mb-6 bg-purple-100 text-purple-800">Our Approach</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              How We Create <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Tomorrow's Voices</span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Through our unique three-pillar approach, we empower disadvantaged youth in Metro Detroit by giving them the professional tools and expert guidance to tell their stories and build their futures.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+      {/* Approach */}
+      <Section tone="muted">
+        <Container>
+          <SectionHeading
+            eyebrow="Our approach"
+            title="How we create tomorrow’s voices"
+            lede="A three-part approach that gives young people in Metro Detroit professional tools, expert guidance and a stage for the stories only they can tell."
+          />
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {impactPillars.map((pillar, index) => (
               <div
                 key={pillar.title}
-                className="group text-center animate-fade-in"
-                style={{ animationDelay: `${index * 0.2}s` }}
+                className="group relative rounded-2xl border border-gray-200/80 bg-white p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-shadow duration-300 hover:shadow-lg hover:shadow-gray-900/[0.05]"
               >
-                <div className={`w-24 h-24 mx-auto mb-8 bg-gradient-to-r ${pillar.color} rounded-2xl group-hover:scale-110 transition-all duration-300 shadow-lg flex items-center justify-center`}>
-                  <pillar.icon className="w-12 h-12 text-white" />
+                <div className="flex items-center justify-between">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                    <pillar.icon className="h-6 w-6" aria-hidden="true" />
+                  </span>
+                  <span className="font-display text-sm font-semibold tabular-nums text-gray-300">0{index + 1}</span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{pillar.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{pillar.description}</p>
+                <h3 className="mt-8 font-display text-xl font-semibold text-gray-900">{pillar.title}</h3>
+                <p className="mt-3 leading-relaxed text-gray-600">{pillar.description}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
 
-      {/* Featured Gallery Preview */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-16">
-            <div>
-              <Badge className="mb-4 bg-green-100 text-green-800">Success Stories</Badge>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Dreams Made <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Real</span>
-              </h2>
-              <p className="text-xl text-gray-600">
-                See the incredible films and art created by the amazing kids we serve.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="flex items-center gap-2 px-6 py-3">
-              <Link to={createPageUrl("Gallery")}>
-                View All Stories <ArrowRight className="w-4 h-4" />
+      {/* Featured gallery */}
+      <Section>
+        <Container>
+          <SectionHeading
+            align="left"
+            eyebrow="Success stories"
+            title="Dreams made real"
+            lede="Films, photos and art created by the amazing kids we serve."
+            action={
+              <Link to={createPageUrl("Gallery")} className={ctaClass('secondary', 'md')}>
+                View all stories <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
-            </Button>
-          </div>
+            }
+          />
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {Array(6).fill(0).map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="aspect-video bg-gray-200 rounded-2xl mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-gray-200/80">
+                  <div className="aspect-[4/3] bg-gray-100" />
+                  <div className="space-y-2 px-4 py-4">
+                    <div className="h-4 w-3/4 rounded bg-gray-100" />
+                    <div className="h-3 w-1/2 rounded bg-gray-100" />
+                  </div>
                 </div>
               ))}
             </div>
           ) : featuredGallery.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Camera className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Featured Stories Coming Soon</h3>
-              <p className="text-gray-600">
-                Amazing stories from our youth will be featured here as they create their films.
-              </p>
+            <div className="rounded-2xl border border-dashed border-gray-300 px-6 py-16 text-center">
+              <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                <Camera className="h-6 w-6 text-gray-400" aria-hidden="true" />
+              </span>
+              <h3 className="font-semibold text-gray-900">Featured stories coming soon</h3>
+              <p className="mt-1 text-gray-600">Stories from our youth will be featured here as they create their films.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {featuredGallery.slice(0, 6).map((item, index) => (
-                <button
-                  type="button"
+                <MediaCard
                   key={item.id}
-                  className="group relative block w-full text-left overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 animate-fade-in focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/60"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                  onClick={() => setSelectedItem(item)}
-                  aria-label={`${item.media_type === 'video' ? 'Play' : 'View'}: ${item.title}`}
-                >
-                  <div className="aspect-video relative overflow-hidden">
-                    <SmartImage
-                      src={getDisplayImage(item)}
-                      fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
-                      alt=""
-                      placeholderIcon={item.media_type === 'video' ? 'video' : 'image'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-
-                    {item.media_type === 'video' && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                          <Play className="w-8 h-8 text-gray-900 ml-1" aria-hidden="true" />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Always visible: touch devices have no hover */}
-                  <div className="absolute bottom-0 left-0 right-0 p-5 pt-12 bg-gradient-to-t from-black/85 via-black/50 to-transparent text-white">
-                    <h3 className="font-bold text-lg leading-snug line-clamp-2">{item.title}</h3>
-                    {item.child_name && (
-                      <p className="mt-1 text-sm text-gray-200 flex items-center gap-2">
-                        <User className="w-4 h-4" aria-hidden="true" />
-                        Created by {item.child_name}{item.child_age ? `, age ${item.child_age}` : ''}
-                      </p>
-                    )}
-                  </div>
-                </button>
+                  item={item}
+                  onOpen={setSelectedItem}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 0.08}s` }}
+                />
               ))}
             </div>
           )}
-        </div>
-      </section>
+        </Container>
+      </Section>
 
-      {/* Call to Action */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-        </div>
-        <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <Badge className="mb-6 bg-white/20 text-white border-white/30">
-            Make a Difference Today
-          </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Change Lives?
-          </h2>
-          <p className="text-xl mb-12 opacity-90 leading-relaxed">
-            Your support doesn't just fund equipment; it provides a safe space, critical skills, and a new direction for youth in our community. Help us divert young people from the streets and into the studio.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Button
-              onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-              className="h-auto bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-10 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300"
-            >
-              <Heart className="w-5 h-5 mr-2" />
-              Donate Today
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="h-auto bg-transparent border-white text-white hover:bg-white hover:text-blue-600 px-10 py-4 rounded-full text-lg font-semibold backdrop-blur-sm"
-            >
-              <Link to={createPageUrl("ReferKid")}>
-                Refer a Child
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      {/* Call to action */}
+      <CtaBand
+        eyebrow="Make a difference today"
+        title="Ready to change a life?"
+        lede="Your support doesn’t just fund equipment. It provides a safe space, real skills and a new direction, moving young people from the streets and into the studio."
+        footer={<>
+          <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" aria-hidden="true" /> Secure checkout by Stripe</span>
+          <span className="flex items-center gap-2"><Users className="h-4 w-4" aria-hidden="true" /> 501(c)(3) · EIN 92-2415944</span>
+          <span className="flex items-center gap-2"><MapPin className="h-4 w-4" aria-hidden="true" /> Serving Metro Detroit</span>
+        </>}
+      >
+        <button type="button" onClick={openDonate} className={ctaClass('light', 'lg')}>
+          <Heart className="h-5 w-5 text-blue-600" aria-hidden="true" />
+          Donate today
+        </button>
+        <Link to={createPageUrl("ReferKid")} className={ctaClass('ghostLight', 'lg')}>
+          Refer a child
+          <ArrowRight className="h-5 w-5" aria-hidden="true" />
+        </Link>
+      </CtaBand>
 
-      {/* Lightbox Modal for Gallery Items */}
-      {selectedItem && (
-        <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-y-auto">
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedItem(null)}
-                className="absolute top-4 right-4 z-10 bg-black/50 text-white hover:bg-black/70"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-              
-              <div className="aspect-video relative overflow-hidden bg-black">
-                {selectedItem.media_type === 'video' ? (
-                  selectedItem.is_external_url ? (
-                    <VideoEmbed 
-                      url={selectedItem.media_url}
-                      title={selectedItem.title}
-                    />
-                  ) : (
-                    <video 
-                      src={selectedItem.media_url}
-                      controls
-                      className="w-full h-full object-contain"
-                      autoPlay
-                    />
-                  )
-                ) : (
-                  <img 
-                    src={selectedItem.media_url}
-                    alt={selectedItem.title}
-                    className="w-full h-full object-contain"
-                  />
-                )}
-              </div>
-              
-              <div className="p-6 bg-white">
-                <div className="flex items-center gap-2 mb-4">
-                  {selectedItem.category && (
-                    <Badge className="bg-purple-100 text-purple-800">
-                      {selectedItem.category.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-                    </Badge>
-                  )}
-                  {selectedItem.media_type && (
-                    <Badge variant="outline">
-                      {selectedItem.media_type.charAt(0).toUpperCase() + selectedItem.media_type.slice(1)}
-                    </Badge>
-                  )}
-                </div>
-                
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                  {selectedItem.title}
-                </h2>
-                
-                {selectedItem.child_name && (
-                  <div className="flex items-center gap-3 mb-4 text-gray-600">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold">
-                        {selectedItem.child_name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium">Created by {selectedItem.child_name}</p>
-                      <p className="text-sm">Age {selectedItem.child_age}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {selectedItem.description && (
-                  <p className="text-gray-700 leading-relaxed">
-                    {selectedItem.description}
-                  </p>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      <MediaLightbox item={selectedItem} onClose={() => setSelectedItem(null)} />
     </div>
   );
 }

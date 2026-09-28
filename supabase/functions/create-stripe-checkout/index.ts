@@ -19,16 +19,23 @@ function json(body: unknown, status = 200) {
   });
 }
 
-// Only redirect back to the site itself (SITE_URL), never to an arbitrary URL.
+// Only redirect back to the site itself, never to an arbitrary URL.
+// SITE_URL may list several origins separated by commas (e.g. the custom domain and the
+// vercel.app address); the first one is the canonical fallback.
+const siteOrigins = (Deno.env.get('SITE_URL') ?? 'http://localhost:5173')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean)
+  .map((value) => new URL(value).origin);
+
 function sameSiteUrl(value: unknown, fallbackPath: string): string {
-  const site = new URL(Deno.env.get('SITE_URL') ?? 'http://localhost:5173');
   try {
     const url = new URL(String(value));
-    if (url.origin === site.origin) return url.toString();
+    if (siteOrigins.includes(url.origin)) return url.toString();
   } catch {
     // fall through
   }
-  return new URL(fallbackPath, site).toString();
+  return new URL(fallbackPath, siteOrigins[0]).toString();
 }
 
 Deno.serve(async (req) => {

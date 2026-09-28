@@ -1,261 +1,226 @@
 import React from 'react';
 import SmartImage from '@/components/ui/smart-image';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Heart, Camera, Users, Star, Award, Target, Tv, Building } from 'lucide-react';
+import { Heart, Camera, Users, Target, Tv, Building, ArrowRight, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/index';
+import { Container, Section, SectionHeading, Eyebrow, CtaBand, Surface, ctaClass } from '@/components/site/ui';
 
-export default function About() {
-  const stats = [
-  { number: "150+", label: "Wishes Granted", icon: Star },
-  { number: "500+", label: "Families Served", icon: Users },
-  { number: "75+", label: "Volunteer Mentors", icon: Heart },
-  { number: "2019", label: "Founded", icon: Award }];
+const FOUNDER_PHOTO = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/cc6b4c44b_Screenshot2025-08-24at92111AM.png";
+const EVENT_PHOTO = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/f4939dbd3_Screenshot2025-08-24at92510AM.png";
 
+const stats = [
+  { number: "150+", label: "Wishes granted" },
+  { number: "500+", label: "Families served" },
+  { number: "75+", label: "Volunteer mentors" },
+  { number: "2019", label: "Founded" },
+];
 
-  const values = [
-  {
-    icon: Heart,
-    title: "Compassion First",
-    description: "Every interaction is guided by empathy and understanding for the families we serve.",
-    color: "from-red-500 to-red-600"
-  },
+const differences = [
   {
     icon: Camera,
-    title: "Creative Excellence",
-    description: "We provide professional-grade equipment and mentorship to ensure high-quality results.",
-    color: "from-purple-500 to-purple-600"
+    title: "Professional equipment & training",
+    description: "Cinema-quality cameras, editing software and hands-on technical skills training.",
   },
   {
     icon: Users,
-    title: "Family-Centered",
-    description: "We work closely with families to ensure each wish reflects the child's unique vision.",
-    color: "from-blue-500 to-blue-600"
+    title: "Inclusive mentorship",
+    description: "Our team includes an editor/director with autism, creating a uniquely supportive environment for neurotypical and autistic youth to collaborate and thrive.",
   },
   {
-    icon: Target,
-    title: "Lasting Impact",
-    description: "Our goal is creating meaningful memories that inspire hope and healing.",
-    color: "from-green-500 to-green-600"
-  }];
+    icon: Heart,
+    title: "Comprehensive support",
+    description: "We partner with families and provide referrals for mental health services to support each child's whole well-being.",
+  },
+];
 
+const values = [
+  { icon: Heart, title: "Compassion first", description: "Every interaction is guided by empathy and understanding for the families we serve." },
+  { icon: Camera, title: "Creative excellence", description: "Professional-grade equipment and mentorship so every project is something to be proud of." },
+  { icon: Users, title: "Family-centered", description: "We work closely with families so each wish reflects the child's unique vision." },
+  { icon: Target, title: "Lasting impact", description: "Creating meaningful memories that inspire hope and healing long after the cameras stop." },
+];
+
+const vision = [
+  {
+    icon: Building,
+    title: "A brick-and-mortar studio",
+    description: "Our ultimate goal is a permanent studio in New Haven: a safe, creative hub for the youth of Metro Detroit to learn, create and grow.",
+  },
+  {
+    icon: Tv,
+    title: "Major media partnerships",
+    description: "We're in negotiations with major media platforms on a groundbreaking project about juvenile “lifers,” bringing their stories to a national audience.",
+  },
+];
+
+function IconTile({ icon: Icon }) {
+  return (
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+      <Icon className="h-5 w-5" aria-hidden="true" />
+    </span>
+  );
+}
+
+export default function About() {
+  const openDonate = () => window.dispatchEvent(new CustomEvent('openDonationModal'));
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-blue-600 to-purple-800 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <img
-            src="https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=1920&h=1080&fit=crop"
-            alt=""
-            className="w-full h-full object-cover" />
-
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div className="text-center lg:text-left">
-              <p className="text-sm sm:text-base font-semibold uppercase tracking-[0.2em] text-yellow-300 mb-3 sm:mb-4">
-                Unlimited Potential 4 Success
+      {/* Hero */}
+      <header className="relative isolate overflow-hidden bg-gray-50">
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(50rem_30rem_at_15%_0%,rgba(37,99,235,0.12),transparent_70%)]" />
+        <Container className="grid grid-cols-1 items-center gap-12 py-16 sm:py-24 lg:grid-cols-12 lg:gap-16">
+          <div className="lg:col-span-7">
+            <Eyebrow className="mb-4">Unlimited Potential 4 Success</Eyebrow>
+            <h1 className="text-balance font-display text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+              Founded on a dream, built for our community
+            </h1>
+            <div className="mt-6 max-w-xl space-y-4 text-lg leading-relaxed text-gray-600">
+              <p>
+                In 1999, Shannon Anderson dreamed of a place called &ldquo;Unlimited Potential 4 Success.&rdquo;
+                Today, his wife, founder Wendy Anderson, has brought that vision to life.
               </p>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-5 sm:mb-6 leading-[1.1]">
-                Founded on a Dream, Built for Our Community
-              </h1>
-              <div className="space-y-4 text-base sm:text-lg text-blue-100 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                <p>
-                  In 1999, Shannon Anderson dreamed of a place called &ldquo;Unlimited Potential 4 Success.&rdquo;
-                  Today, his wife, founder Wendy Anderson, has brought that vision to life.
-                </p>
-                <p>
-                  Team UP4S is a 501(c)(3) nonprofit diverting disadvantaged youth in Metro Detroit from street
-                  violence, drug use, and trauma, with professional training in film, media, and the performing arts
-                  that helps them find their voice, build their future, and tell their story.
-                </p>
-              </div>
-              <Button
-                onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-yellow-600 px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold w-full sm:w-auto">
-
-                Support Our Mission
-              </Button>
+              <p>
+                Team UP4S is a 501(c)(3) nonprofit diverting disadvantaged youth in Metro Detroit from street
+                violence, drug use and trauma, with professional training in film, media and the performing arts
+                that helps them find their voice, build their future and tell their story.
+              </p>
             </div>
-            <div className="relative mt-6 lg:mt-0 flex justify-center">
-              <SmartImage
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/cc6b4c44b_Screenshot2025-08-24at92111AM.png"
-                alt="Wendy Anderson with her family"
-                className="w-full max-w-xs sm:max-w-sm aspect-[4/5] object-cover rounded-2xl shadow-2xl" />
-
-              <div className="absolute -bottom-3 -right-3 sm:-bottom-4 sm:-right-4 bg-white rounded-2xl p-3 sm:p-4 shadow-xl">
-                <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-gray-900">Wendy Anderson</p>
-                  <p className="text-sm sm:text-base text-gray-600">Founder & CEO</p>
-                </div>
-              </div>
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              <button type="button" onClick={openDonate} className={ctaClass('primary', 'lg')}>
+                <Heart className="h-5 w-5" aria-hidden="true" />
+                Support our mission
+              </button>
+              <Link to={createPageUrl("Gallery")} className={ctaClass('secondary', 'lg')}>
+                See their work <ArrowRight className="h-5 w-5" aria-hidden="true" />
+              </Link>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="py-12 sm:py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {stats.map((stat, index) =>
-            <div
-              key={stat.label}
-              className="text-center animate-fade-in"
-              style={{ animationDelay: `${index * 0.2}s` }}>
-
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <stat.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{stat.number}</div>
-                <div className="text-sm sm:text-base text-gray-600">{stat.label}</div>
+          <div className="lg:col-span-5">
+            <figure className="relative mx-auto max-w-sm lg:max-w-none">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-gray-100 shadow-2xl shadow-gray-900/10 ring-1 ring-gray-900/5">
+                <SmartImage src={FOUNDER_PHOTO} alt="Wendy Anderson with her family" className="absolute inset-0 h-full w-full object-cover" />
               </div>
-            )}
+              <figcaption className="absolute -bottom-5 left-5 right-5 rounded-2xl border border-gray-200/80 bg-white/95 px-5 py-4 shadow-xl backdrop-blur sm:left-auto sm:right-[-1.25rem] sm:w-64">
+                <p className="font-display font-semibold text-gray-900">Wendy Anderson</p>
+                <p className="text-sm text-gray-500">Founder &amp; CEO</p>
+              </figcaption>
+            </figure>
           </div>
-        </div>
-      </section>
+        </Container>
+      </header>
 
-      {/* Mission Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-              Why We Do <span className="gradient-text">What We Do</span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">When a child faces poverty, trauma, or systemic barriers, their world can feel hopeless. We believe in the transformative power of creativity. By providing professional skills and a supportive, inclusive community, we help underserved youth process their experiences, discover their potential, and build a foundation for a successful future.
-            </p>
-          </div>
+      {/* Stats */}
+      <div className="border-y border-gray-100 bg-white">
+        <Container>
+          <dl className="grid grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-gray-100">
+            {stats.map((stat, index) => (
+              <div
+                key={stat.label}
+                className={`flex flex-col px-4 py-10 text-center ${index < 2 ? 'border-b border-gray-100 lg:border-b-0' : ''} ${index % 2 === 0 ? 'border-r border-gray-100 lg:border-r-0' : ''}`}
+              >
+                <dt className="order-2 mt-2 text-sm font-medium text-gray-500">{stat.label}</dt>
+                <dd className="order-1 font-display text-4xl font-bold tracking-tight tabular-nums text-gray-900">{stat.number}</dd>
+              </div>
+            ))}
+          </dl>
+        </Container>
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      {/* Mission */}
+      <Section>
+        <Container>
+          <SectionHeading
+            eyebrow="Why we do it"
+            title="Creativity can change a child’s story"
+            lede="When a child faces poverty, trauma or systemic barriers, their world can feel hopeless. Professional skills and a supportive, inclusive community help underserved youth process their experiences, discover their potential and build a foundation for a successful future."
+          />
+
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">The UP4S Difference</h3>
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex-shrink-0 flex items-center justify-center">
-                    <Camera className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 mb-2">Professional Equipment & Training</h4>
-                    <p className="text-gray-600">We provide cinema-quality cameras, editing software, and hands-on technical skills training.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex-shrink-0 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 mb-2">Inclusive Mentorship</h4>
-                    <p className="text-gray-600">Our team includes an editor/director with autism, creating a uniquely supportive environment for both neurotypical and autistic youth to collaborate and thrive.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex-shrink-0 flex items-center justify-center">
-                    <Heart className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 mb-2">Comprehensive Support</h4>
-                    <p className="text-gray-600">We partner with families and provide referrals for mental health services to ensure holistic well-being.</p>
-                  </div>
-                </div>
-              </div>
+              <h3 className="font-display text-2xl font-semibold tracking-tight text-gray-900">The UP4S difference</h3>
+              <ul className="mt-8 space-y-7">
+                {differences.map((item) => (
+                  <li key={item.title} className="flex gap-4">
+                    <IconTile icon={item.icon} />
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                      <p className="mt-1 leading-relaxed text-gray-600">{item.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="relative">
-              <SmartImage
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/f4939dbd3_Screenshot2025-08-24at92510AM.png"
-                alt="Children at a Team UP4S event"
-                className="w-full aspect-[4/3] object-cover rounded-2xl shadow-2xl" />
-
-              <div className="absolute -bottom-6 -left-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
-                <p className="text-lg font-bold">Every child deserves to</p>
-                <p className="text-lg font-bold">tell their story</p>
+            <figure className="relative pb-8 lg:pb-0">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-gray-100 shadow-2xl shadow-gray-900/10 ring-1 ring-gray-900/5">
+                <SmartImage src={EVENT_PHOTO} alt="Children at a Team UP4S event" className="absolute inset-0 h-full w-full object-cover" />
               </div>
-            </div>
+              <blockquote className="absolute -bottom-2 left-4 right-4 rounded-2xl bg-gray-950 px-6 py-5 text-white shadow-xl sm:left-auto sm:right-[-1rem] sm:w-72 lg:-bottom-8">
+                <Quote className="mb-2 h-5 w-5 text-yellow-400" aria-hidden="true" />
+                <p className="font-display text-lg font-semibold leading-snug">Every child deserves to tell their story.</p>
+              </blockquote>
+            </figure>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
 
-      {/* Values Section */}
-      <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-              What Drives <span className="gradient-text">Our Work</span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our core values guide every decision we make and every wish we grant.
-            </p>
+      {/* Values */}
+      <Section tone="muted">
+        <Container>
+          <SectionHeading
+            eyebrow="Our values"
+            title="What drives our work"
+            lede="The principles behind every decision we make and every wish we grant."
+          />
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {values.map((value) => (
+              <Surface key={value.title} className="p-7">
+                <IconTile icon={value.icon} />
+                <h3 className="mt-6 font-display text-lg font-semibold text-gray-900">{value.title}</h3>
+                <p className="mt-2 leading-relaxed text-gray-600">{value.description}</p>
+              </Surface>
+            ))}
           </div>
+        </Container>
+      </Section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {values.map((value, index) =>
-            <div
-              key={value.title}
-              className="text-center group transition-transform duration-300 animate-slide-up"
-              style={{ animationDelay: `${index * 0.2}s` }}>
-
-                <div className={`w-20 h-20 mx-auto mb-6 bg-gradient-to-r ${value.color} rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg`}>
-                  <value.icon className="w-10 h-10 text-white" />
+      {/* Vision */}
+      <Section>
+        <Container>
+          <SectionHeading
+            eyebrow="Looking ahead"
+            title="Our vision for the future"
+            lede="We're expanding our impact through major projects and community investment."
+          />
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-2">
+            {vision.map((item, index) => (
+              <Surface key={item.title} className="relative overflow-hidden p-8 sm:p-10">
+                <span aria-hidden="true" className="absolute right-6 top-4 font-display text-7xl font-bold text-gray-100">0{index + 1}</span>
+                <div className="relative">
+                  <IconTile icon={item.icon} />
+                  <h3 className="mt-6 font-display text-2xl font-semibold tracking-tight text-gray-900">{item.title}</h3>
+                  <p className="mt-3 leading-relaxed text-gray-600">{item.description}</p>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{value.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{value.description}</p>
-              </div>
-            )}
+              </Surface>
+            ))}
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
 
-      {/* Vision Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-              Our Vision for the <span className="gradient-text">Future</span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We are actively expanding our impact through major projects and community investment.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="bg-gray-50 rounded-2xl p-8 border">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6">
-                <Building className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Brick-and-Mortar Studio</h3>
-              <p className="text-gray-600">Our ultimate goal is to establish a permanent studio facility in New Haven, a safe, creative hub for the youth of Metro Detroit to learn, create, and grow.</p>
-            </div>
-            <div className="bg-gray-50 rounded-2xl p-8 border">
-              <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-red-500 rounded-2xl flex items-center justify-center mb-6">
-                <Tv className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Major Media Partnerships</h3>
-              <p className="text-gray-600">We are in negotiations with major media platforms for a groundbreaking project focused on the stories of juvenile "lifers," bringing their powerful narratives to a national audience.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="py-24 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Ready to Invest in Our Community's Youth?
-          </h2>
-          <p className="text-xl text-blue-100 mb-12 leading-relaxed">
-            Your support helps us provide professional skills, mentorship, and a safe alternative to the streets. Join us in empowering the next generation of creators and leaders in our community.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Button
-              onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-10 py-4 text-lg font-semibold">
-
-              <Heart className="w-5 h-5 mr-2" />
-              Make a Donation
-            </Button>
-          </div>
-        </div>
-      </section>
-    </div>);
-
+      <CtaBand
+        eyebrow="Join us"
+        title="Invest in our community’s youth"
+        lede="Your support provides professional skills, mentorship and a safe alternative to the streets for the next generation of creators and leaders."
+      >
+        <button type="button" onClick={openDonate} className={ctaClass('light', 'lg')}>
+          <Heart className="h-5 w-5 text-blue-600" aria-hidden="true" />
+          Make a donation
+        </button>
+        <Link to={createPageUrl("ReferKid")} className={ctaClass('ghostLight', 'lg')}>
+          Refer a child <ArrowRight className="h-5 w-5" aria-hidden="true" />
+        </Link>
+      </CtaBand>
+    </div>
+  );
 }

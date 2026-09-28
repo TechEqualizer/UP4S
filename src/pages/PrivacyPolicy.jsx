@@ -1,17 +1,13 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Container, PageHeader } from '@/components/site/ui';
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-gray-50 py-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold text-gray-900">Privacy Policy</CardTitle>
-            <p className="text-gray-600">Last updated: January 2024</p>
-          </CardHeader>
-          <CardContent className="prose prose-lg max-w-none">
+    <div className="min-h-screen bg-white">
+      <PageHeader eyebrow="Legal" title="Privacy Policy" lede="Last updated: January 2024" />
+      <Container size="narrow" className="py-12 sm:py-16">
+        <article className="prose prose-gray max-w-none prose-headings:font-display prose-headings:tracking-tight prose-h2:mt-12 prose-h2:text-2xl prose-a:text-blue-700 prose-li:marker:text-gray-400">
             <h2>Introduction</h2>
             <p>
               Team UP4S ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or make a donation.
@@ -78,9 +74,8 @@ export default function PrivacyPolicy() {
               <br /><strong>Phone:</strong> <a href="tel:5862448492">586-244-8492</a>
               <br /><strong>Mailing Address:</strong> PO Box 480012, New Haven, MI 48048
             </p>
-          </CardContent>
-        </Card>
-      </div>
+        </article>
+      </Container>
     </div>
   );
 }

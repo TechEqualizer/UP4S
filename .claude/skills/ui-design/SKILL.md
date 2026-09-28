@@ -63,8 +63,21 @@ Always:
 
 ## Public pages
 
-- Section rhythm `py-16 sm:py-24`, eyebrow (small uppercase blue) + headline + short lede.
-- Buttons: primary gradient pill for main CTA, outline for secondary; one primary per view.
+Build from `src/components/site/ui.jsx`; don't hand-roll headings, bands or buttons:
+
+- `PageHeader` opens every interior page (eyebrow, h1, lede, optional CTAs).
+- `Section` (`tone="white" | "muted" | "dark"`) + `Container` give the `py-16 sm:py-24` rhythm
+  and page gutters. Alternate white and muted sections.
+- `SectionHeading` = eyebrow (small uppercase, blue; yellow on dark) + `font-display` headline +
+  lede. Headlines are sentence case, `text-balance`. No multicolour gradient text.
+- `ctaClass(variant, size)` for every button/link that looks like a button:
+  `primary` (blue gradient, the Donate action, one per view), `accent` (yellow, Refer a Kid),
+  `secondary` (white outline), `light` / `ghostLight` on photos and blue/dark bands.
+- `CtaBand` closes a page; `Surface` is the standard white card.
+- Icons sit in a tinted tile (`bg-blue-50 text-blue-600 ring-1 ring-blue-100`), never a rainbow
+  of gradient squares.
+- Gallery tiles use `MediaCard` / `MediaLightbox` from `components/gallery/MediaCard.jsx`.
+- Feedback is `toast` from sonner, never `alert()`.
 - Respect `prefers-reduced-motion` for slideshows and animations.
 
 ## Checklist before shipping UI

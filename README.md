@@ -59,10 +59,12 @@ supabase/
 4. **Stripe**: set the function secrets and deploy the functions:
 
    ```bash
-   supabase secrets set STRIPE_SECRET_KEY=sk_... SITE_URL=https://your-site.example
+   supabase secrets set STRIPE_SECRET_KEY=sk_... SITE_URL=https://www.teamup4s.org,https://teamup4s.org,https://up4s.vercel.app
    supabase functions deploy create-stripe-checkout
    supabase functions deploy stripe-webhook --no-verify-jwt
    ```
+
+   `SITE_URL` is a comma-separated list of the addresses the site is served from. Stripe only sends donors back to one of these; the first is the default.
 
    In the Stripe dashboard, add a webhook endpoint at `https://<project-ref>.supabase.co/functions/v1/stripe-webhook` for the events `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired` and `invoice.paid`, then set its signing secret:
 
@@ -77,7 +79,7 @@ supabase/
 1. Import the repository in Vercel (Add New → Project). Framework and build settings come from `vercel.json`.
 2. Add the environment variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (use the legacy `eyJ…` anon key; the checkout function's JWT check doesn't accept `sb_publishable_…` keys).
 3. Under Settings → Deployment Protection, make sure Vercel Authentication covers previews only, or visitors will be asked to log in to Vercel.
-4. Point Supabase's Auth Site URL and the `SITE_URL` function secret at the site's final domain.
+4. Point Supabase's Auth Site URL at the site's final domain (`https://www.teamup4s.org`), add `https://www.teamup4s.org/**` and `https://teamup4s.org/**` to Auth Redirect URLs, and list every domain in the `SITE_URL` function secret.
 
 ## Importing data from Base44
 

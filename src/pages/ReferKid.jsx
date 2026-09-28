@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { KidReferral } from '@/api/entities';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Heart, Users, Camera, Star, CheckCircle, Upload, AlertTriangle, Info, Shield } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Heart, Users, Camera, CheckCircle, Upload, AlertTriangle, Shield, Loader2 } from 'lucide-react';
+import { Container, PageHeader, Surface, ctaClass } from '@/components/site/ui';
 import { UploadReferralFile } from '@/api/integrations';
 
 export default function ReferKid() {
@@ -128,7 +127,7 @@ export default function ReferKid() {
       
       // File size validation (10MB max)
       if (file.size > 10 * 1024 * 1024) {
-        alert(`File ${file.name} is too large. Maximum size is 10MB.`);
+        toast.error(`${file.name} is too large`, { description: 'Files can be up to 10 MB.' });
         continue;
       }
 
@@ -141,7 +140,7 @@ export default function ReferKid() {
         }]);
         setUploadProgress(((i + 1) / files.length) * 100);
       } catch (error) {
-        alert(`Error uploading ${file.name}. Please try again.`);
+        toast.error(`Couldn’t upload ${file.name}`, { description: 'Please try again.' });
       }
     }
 
@@ -189,485 +188,389 @@ export default function ReferKid() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error('Referral submission error:', error);
-      alert('There was an error submitting the referral. Please try again or contact us directly at teamup4smi@gmail.com');
+      toast.error('We couldn’t submit the referral', { description: 'Please try again, or email teamup4smi@gmail.com.' });
     }
 
     setIsSubmitting(false);
   };
 
+  const contactLine = (
+    <p className="text-sm text-gray-500">
+      Questions? Email{' '}
+      <a href="mailto:teamup4smi@gmail.com" className="font-medium text-blue-700 hover:underline">teamup4smi@gmail.com</a>{' '}
+      or call{' '}
+      <a href="tel:5862448492" className="font-medium text-blue-700 hover:underline">(586) 244-8492</a>
+    </p>
+  );
+
   if (submitted) {
+    const nextSteps = [
+      'Our team reviews the referral and any uploaded materials',
+      "We contact the family within 48 hours to discuss the child's vision",
+      'If approved, we begin planning the filmmaking experience',
+      "Professional mentors are matched with the child's interests and needs",
+    ];
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center px-4">
-        <Card className="max-w-2xl w-full text-center">
-          <CardContent className="p-12">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
-              <CheckCircle className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">
-              Thank You for Your Referral!
-            </h1>
-            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              We've received {formData.child_name}'s information and our team will review it carefully. 
-              We'll be in touch with {formData.guardian_name} within 48 hours to discuss next steps.
-            </p>
-            
-            <div className="bg-blue-50 rounded-lg p-6 mb-8">
-              <h3 className="font-semibold text-blue-900 mb-3 flex items-center justify-center gap-2">
-                <Info className="w-5 h-5" />
-                What Happens Next?
-              </h3>
-              <div className="space-y-2 text-sm text-blue-800 text-left">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-blue-800 text-xs font-bold">1</span>
-                  </div>
-                  <p>Our team reviews the referral and any uploaded materials</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-blue-800 text-xs font-bold">2</span>
-                  </div>
-                  <p>We contact the family within 48 hours to discuss the child's vision</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-blue-800 text-xs font-bold">3</span>
-                  </div>
-                  <p>If approved, we begin planning the filmmaking experience</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-blue-800 text-xs font-bold">4</span>
-                  </div>
-                  <p>Professional mentors are matched with the child's interests and needs</p>
-                </div>
-              </div>
-            </div>
-            
-            <Alert className="mb-8">
-              <Shield className="w-4 h-4" />
-              <AlertDescription>
-                <strong>Your Privacy Matters:</strong> All information shared will be kept strictly confidential. 
-                We only use this information to help assess how we can best serve {formData.child_name}.
-              </AlertDescription>
-            </Alert>
-            
-            <div className="space-y-4">
-              <Button
-                onClick={() => window.location.href = '/'}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 w-full sm:w-auto">
-                Return to Homepage
-              </Button>
-              
-              <div className="text-center">
-                <p className="text-sm text-gray-500">
-                  Questions? Contact us at{' '}
-                  <a href="mailto:teamup4smi@gmail.com" className="text-blue-600 hover:underline">
-                    teamup4smi@gmail.com
-                  </a>{' '}
-                  or{' '}
-                  <a href="tel:5862448492" className="text-blue-600 hover:underline">
-                    (586) 244-8492
-                  </a>
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="relative isolate min-h-[80vh] bg-gray-50 px-4 py-16 sm:py-24">
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(50rem_30rem_at_50%_-10%,rgba(37,99,235,0.12),transparent_70%)]" />
+        <Surface className="mx-auto max-w-2xl p-8 text-center shadow-xl shadow-gray-900/[0.04] sm:p-12">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50 ring-8 ring-green-50/50">
+            <CheckCircle className="h-8 w-8 text-green-600" aria-hidden="true" />
+          </span>
+          <h1 className="mt-8 text-balance font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Thank you for your referral
+          </h1>
+          <p className="mx-auto mt-4 max-w-lg text-lg leading-relaxed text-gray-600">
+            We&apos;ve received {formData.child_name}&apos;s information. Our team will review it carefully and
+            reach out to {formData.guardian_name} within 48 hours.
+          </p>
+
+          <div className="mt-10 rounded-2xl border border-gray-200/80 bg-gray-50 p-6 text-left">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">What happens next</h2>
+            <ol className="mt-4 space-y-3">
+              {nextSteps.map((step, i) => (
+                <li key={step} className="flex items-start gap-3 text-gray-700">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-blue-700 ring-1 ring-gray-200">{i + 1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <p className="mt-6 flex items-start gap-2 text-left text-sm text-gray-500">
+            <Shield className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+            Everything you shared is kept strictly confidential and used only to assess how we can best serve {formData.child_name}.
+          </p>
+
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <Link to="/" className={ctaClass('primary', 'lg')}>Return to homepage</Link>
+            {contactLine}
+          </div>
+        </Surface>
       </div>
     );
   }
 
+  const steps = [
+    { icon: Users, title: 'Submit a referral', description: 'Share the child and guardian details along with their creative wish.' },
+    { icon: Heart, title: 'We review & reach out', description: 'Our team reviews each referral and contacts the family within 48 hours.' },
+    { icon: Camera, title: 'Create something amazing', description: 'Approved children receive equipment, mentorship and support to make their film.' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <Badge className="mb-6 bg-blue-100 text-blue-800">Make a Referral</Badge>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Unlock a Child's Creative Potential
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Know a disadvantaged youth whose voice deserves to be heard? Help us provide professional 
-            filmmaking tools and expert mentorship to divert them from trauma and empower them to share their story.
-          </p>
-        </div>
+    <div className="min-h-screen bg-white">
+      <PageHeader
+        eyebrow="Refer a kid"
+        title="Unlock a child’s creative potential"
+        lede="Know a young person whose voice deserves to be heard? Refer them for professional filmmaking tools and mentorship that help them share their story."
+      />
 
-        {/* Auto-save notice */}
-        {(formData.child_name || formData.guardian_name || formData.wish_description) && (
-          <Alert className="mb-8">
-            <Info className="w-4 h-4" />
-            <AlertDescription>
-              Your form progress is being automatically saved as you type.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Process Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          {[
-            {
-              icon: Users,
-              title: "Submit Referral",
-              description: "Provide child and guardian information along with their creative wish",
-              color: "from-blue-500 to-blue-600"
-            },
-            {
-              icon: Heart,
-              title: "Review & Approve", 
-              description: "Our team carefully reviews each referral and contacts the family within 48 hours",
-              color: "from-purple-500 to-purple-600"
-            },
-            {
-              icon: Camera,
-              title: "Create Magic",
-              description: "Approved children receive equipment, mentorship, and support to create their film",
-              color: "from-yellow-500 to-yellow-600"
-            }
-          ].map((step, index) => (
-            <div key={step.title} className="text-center">
-              <div className={`w-16 h-16 mx-auto mb-6 bg-gradient-to-r ${step.color} rounded-2xl flex items-center justify-center`}>
-                <step.icon className="w-8 h-8 text-white" />
+      <Container className="max-w-5xl py-12 sm:py-16">
+        {/* How it works */}
+        <ol className="mb-12 grid grid-cols-1 gap-4 sm:mb-16 md:grid-cols-3">
+          {steps.map((step, index) => (
+            <li key={step.title} className="relative rounded-2xl border border-gray-200/80 bg-white p-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <step.icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">Step {index + 1}</span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-              <p className="text-gray-600">{step.description}</p>
-            </div>
+              <h2 className="mt-4 font-semibold text-gray-900">{step.title}</h2>
+              <p className="mt-1 text-sm leading-relaxed text-gray-600">{step.description}</p>
+            </li>
           ))}
-        </div>
+        </ol>
 
-        {/* Referral Form */}
-        <Card className="shadow-xl border-0">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-lg">
-            <CardTitle className="text-2xl flex items-center gap-3">
-              <Star className="w-6 h-6" />
-              Child Referral Form
-            </CardTitle>
-            <p className="text-blue-100">
-              All information is kept strictly confidential and secure. Required fields are marked with *
-            </p>
-          </CardHeader>
-          <CardContent className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Child Information */}
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  Child Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="child-name">Child's Full Name *</Label>
-                    <Input
-                      id="child-name"
-                      name="child_name"
-                      required
-                      value={formData.child_name}
-                      onChange={(e) => handleInputChange('child_name', e.target.value)}
-                      placeholder="Enter child's full name"
-                      className={formErrors.child_name ? 'border-red-500' : ''}
-                    />
-                    {formErrors.child_name && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <AlertTriangle className="w-4 h-4" />
-                        {formErrors.child_name}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="child-age">Child's Age *</Label>
-                    <Input
-                      id="child-age"
-                      name="child_age"
-                      type="number"
-                      min="3"
-                      max="18"
-                      required
-                      value={formData.child_age}
-                      onChange={(e) => handleInputChange('child_age', e.target.value)}
-                      placeholder="Age (3-18 years)"
-                      className={formErrors.child_age ? 'border-red-500' : ''}
-                    />
-                    {formErrors.child_age && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <AlertTriangle className="w-4 h-4" />
-                        {formErrors.child_age}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
+        {/* Referral form */}
+        <Surface className="overflow-hidden shadow-xl shadow-gray-900/[0.04]">
+          <div className="flex flex-col gap-3 border-b border-gray-100 bg-gray-50/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-10">
+            <div>
+              <h2 className="font-display text-xl font-semibold text-gray-900">Child referral form</h2>
+              <p className="mt-0.5 text-sm text-gray-500">Confidential and secure. Required fields are marked <span className="text-red-600">*</span></p>
+            </div>
+            {(formData.child_name || formData.guardian_name || formData.wish_description) && (
+              <p className="inline-flex items-center gap-1.5 self-start rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 sm:self-auto">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />
+                Progress saved automatically
+              </p>
+            )}
+          </div>
 
-              {/* Guardian Information */}
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-500" />
-                  Guardian/Parent Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <Label htmlFor="guardian-name">Guardian's Full Name *</Label>
-                    <Input
-                      id="guardian-name"
-                      name="guardian_name"
-                      required
-                      value={formData.guardian_name}
-                      onChange={(e) => handleInputChange('guardian_name', e.target.value)}
-                      placeholder="Enter guardian's full name"
-                      className={formErrors.guardian_name ? 'border-red-500' : ''}
-                    />
-                    {formErrors.guardian_name && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <AlertTriangle className="w-4 h-4" />
-                        {formErrors.guardian_name}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="guardian-email">Guardian's Email *</Label>
-                    <Input
-                      id="guardian-email"
-                      name="guardian_email"
-                      type="email"
-                      required
-                      value={formData.guardian_email}
-                      onChange={(e) => handleInputChange('guardian_email', e.target.value)}
-                      placeholder="guardian@email.com"
-                      className={formErrors.guardian_email ? 'border-red-500' : ''}
-                    />
-                    {formErrors.guardian_email && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <AlertTriangle className="w-4 h-4" />
-                        {formErrors.guardian_email}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="guardian-phone">Guardian's Phone Number</Label>
-                    <Input
-                      id="guardian-phone"
-                      name="guardian_phone"
-                      type="tel"
-                      value={formData.guardian_phone}
-                      onChange={handlePhoneChange}
-                      placeholder="(555) 123-4567"
-                      maxLength={14}
-                      className={formErrors.guardian_phone ? 'border-red-500' : ''}
-                    />
-                    {formErrors.guardian_phone && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <AlertTriangle className="w-4 h-4" />
-                        {formErrors.guardian_phone}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="referral-source">How did you hear about UP4S?</Label>
-                    <Input
-                      id="referral-source"
-                      value={formData.referral_source}
-                      onChange={(e) => handleInputChange('referral_source', e.target.value)}
-                      placeholder="Hospital, school, friend, social media, etc."
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Creative Wish Information */}
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Camera className="w-5 h-5 text-purple-500" />
-                  Creative Wish Information
-                </h3>
-                <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="wish-description">Describe the Child's Creative Wish *</Label>
-                    <Textarea
-                      id="wish-description"
-                      name="wish_description"
-                      required
-                      value={formData.wish_description}
-                      onChange={(e) => handleInputChange('wish_description', e.target.value)}
-                      placeholder="What kind of film or art project does the child want to create? What's their vision or story they want to tell? Please be as detailed as possible."
-                      rows={5}
-                      className={formErrors.wish_description ? 'border-red-500' : ''}
-                    />
-                    <div className="flex justify-between items-center mt-1">
-                      {formErrors.wish_description ? (
-                        <p className="text-red-500 text-sm flex items-center gap-1">
-                          <AlertTriangle className="w-4 h-4" />
-                          {formErrors.wish_description}
-                        </p>
-                      ) : (
-                        <p className="text-gray-500 text-sm">
-                          {formData.wish_description.length < 20 ? 
-                            `Please provide at least ${20 - formData.wish_description.length} more characters` :
-                            'Great! You\'ve provided enough detail.'
-                          }
-                        </p>
-                      )}
-                      <p className="text-gray-400 text-sm">
-                        {formData.wish_description.length}/500
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="urgency-level">Urgency Level</Label>
-                    <Select
-                      value={formData.urgency_level}
-                      onValueChange={(value) => handleInputChange('urgency_level', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low - Seeking new opportunities</SelectItem>
-                        <SelectItem value="medium">Medium - Facing some challenges</SelectItem>
-                        <SelectItem value="high">High - At-risk situation</SelectItem>
-                        <SelectItem value="critical">Critical - Immediate intervention needed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              {/* File Upload */}
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Upload className="w-5 h-5 text-green-500" />
-                  Additional Information (Optional)
-                </h3>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*,video/*,.pdf,.doc,.docx"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload"
-                    disabled={isUploading}
+          <form onSubmit={handleSubmit} className="divide-y divide-gray-100">
+            {/* Child */}
+            <FormSection number={1} title="About the child" description="Who are we making this possible for?">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="child-name">Child&apos;s full name <Req /></Label>
+                  <Input
+                    id="child-name"
+                    name="child_name"
+                    required
+                    value={formData.child_name}
+                    onChange={(e) => handleInputChange('child_name', e.target.value)}
+                    placeholder="First and last name"
+                    aria-invalid={!!formErrors.child_name}
+                    className={inputClass(formErrors.child_name)}
                   />
-                  <label htmlFor="file-upload" className={`cursor-pointer ${isUploading ? 'opacity-50' : ''}`}>
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 mb-2">
-                      {isUploading ? 'Uploading files...' : 'Upload photos, videos, or documents'}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Optional: Photos of the child, artwork samples, medical documents, etc. (Max 10MB per file)
-                    </p>
-                  </label>
-                  {isUploading && (
-                    <div className="mt-4">
-                      <Progress value={uploadProgress} className="w-full" />
-                      <p className="text-sm text-gray-600 mt-2">{Math.round(uploadProgress)}% uploaded</p>
-                    </div>
-                  )}
+                  <FieldError message={formErrors.child_name} />
                 </div>
-                
-                {uploadedFiles.length > 0 && (
-                  <div className="mt-4">
-                    <p className="font-medium text-gray-900 mb-3">Uploaded Files:</p>
-                    <div className="space-y-2">
-                      {uploadedFiles.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                          <div className="flex items-center gap-2 flex-1">
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                            <span className="text-sm text-gray-700 truncate">{file.name}</span>
-                            <span className="text-xs text-gray-500">
-                              ({(file.size / 1024 / 1024).toFixed(1)} MB)
-                            </span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(index)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="child-age">Child&apos;s age <Req /></Label>
+                  <Input
+                    id="child-age"
+                    name="child_age"
+                    type="number"
+                    min="3"
+                    max="18"
+                    required
+                    value={formData.child_age}
+                    onChange={(e) => handleInputChange('child_age', e.target.value)}
+                    placeholder="3–18"
+                    aria-invalid={!!formErrors.child_age}
+                    className={inputClass(formErrors.child_age)}
+                  />
+                  <FieldError message={formErrors.child_age} />
+                </div>
               </div>
+            </FormSection>
 
-              {/* Consent and Privacy */}
-              <div className="bg-gray-50 rounded-lg p-6 border">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  Consent and Privacy
-                </h3>
-                
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="consent"
-                      name="consent"
-                      checked={hasConsented}
-                      onCheckedChange={setHasConsented}
-                      className={formErrors.consent ? 'border-red-500' : ''}
-                    />
-                    <div>
-                      <label htmlFor="consent" className="text-sm text-gray-700 leading-relaxed cursor-pointer">
-                        I confirm that I have permission to share this information about the child mentioned above. 
-                        I understand that all details provided will be kept strictly confidential and used only for 
-                        the purpose of assessing how Team UP4S can best serve this child. I also understand that 
-                        Team UP4S reserves the right to decline referrals that don't meet program criteria.
-                      </label>
-                      {formErrors.consent && (
-                        <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                          <AlertTriangle className="w-4 h-4" />
-                          {formErrors.consent}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <Alert>
-                    <Shield className="w-4 h-4" />
-                    <AlertDescription>
-                      <strong>Privacy Notice:</strong> Your information is protected and will never be shared with 
-                      third parties without your explicit consent. We comply with all applicable privacy laws and 
-                      maintain strict confidentiality standards.
-                    </AlertDescription>
-                  </Alert>
+            {/* Guardian */}
+            <FormSection number={2} title="Parent or guardian" description="We'll contact this person about next steps.">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="guardian-name">Guardian&apos;s full name <Req /></Label>
+                  <Input
+                    id="guardian-name"
+                    name="guardian_name"
+                    required
+                    autoComplete="name"
+                    value={formData.guardian_name}
+                    onChange={(e) => handleInputChange('guardian_name', e.target.value)}
+                    placeholder="First and last name"
+                    aria-invalid={!!formErrors.guardian_name}
+                    className={inputClass(formErrors.guardian_name)}
+                  />
+                  <FieldError message={formErrors.guardian_name} />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guardian-email">Guardian&apos;s email <Req /></Label>
+                  <Input
+                    id="guardian-email"
+                    name="guardian_email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={formData.guardian_email}
+                    onChange={(e) => handleInputChange('guardian_email', e.target.value)}
+                    placeholder="name@example.com"
+                    aria-invalid={!!formErrors.guardian_email}
+                    className={inputClass(formErrors.guardian_email)}
+                  />
+                  <FieldError message={formErrors.guardian_email} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guardian-phone">Phone number</Label>
+                  <Input
+                    id="guardian-phone"
+                    name="guardian_phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={formData.guardian_phone}
+                    onChange={handlePhoneChange}
+                    placeholder="(555) 123-4567"
+                    maxLength={14}
+                    aria-invalid={!!formErrors.guardian_phone}
+                    className={inputClass(formErrors.guardian_phone)}
+                  />
+                  <FieldError message={formErrors.guardian_phone} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="referral-source">How did you hear about UP4S?</Label>
+                  <Input
+                    id="referral-source"
+                    value={formData.referral_source}
+                    onChange={(e) => handleInputChange('referral_source', e.target.value)}
+                    placeholder="School, hospital, friend, social media…"
+                    className={inputClass()}
+                  />
+                </div>
+              </div>
+            </FormSection>
 
-                <div className="mt-6">
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 text-lg font-semibold"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Submitting Referral...
-                      </>
+            {/* Wish */}
+            <FormSection number={3} title="The creative wish" description="Tell us the story they want to tell.">
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="wish-description">Describe the child&apos;s creative wish <Req /></Label>
+                  <Textarea
+                    id="wish-description"
+                    name="wish_description"
+                    required
+                    value={formData.wish_description}
+                    onChange={(e) => handleInputChange('wish_description', e.target.value)}
+                    placeholder="What kind of film or art project does the child want to create? What story do they want to tell? The more detail, the better."
+                    rows={5}
+                    aria-invalid={!!formErrors.wish_description}
+                    className={formErrors.wish_description ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                  />
+                  <div className="flex items-center justify-between gap-4">
+                    {formErrors.wish_description ? (
+                      <FieldError message={formErrors.wish_description} />
                     ) : (
-                      'Submit Referral'
+                      <p className={`text-sm ${formData.wish_description.length < 20 ? 'text-gray-500' : 'text-green-700'}`}>
+                        {formData.wish_description.length < 20
+                          ? `At least ${20 - formData.wish_description.length} more characters`
+                          : 'Great, that’s enough detail.'}
+                      </p>
                     )}
-                  </Button>
-                  
-                  <p className="text-center text-sm text-gray-500 mt-4">
-                    Questions? Contact us at{' '}
-                    <a href="mailto:teamup4smi@gmail.com" className="text-blue-600 hover:underline">
-                      teamup4smi@gmail.com
-                    </a>{' '}
-                    or{' '}
-                    <a href="tel:5862448492" className="text-blue-600 hover:underline">
-                      (586) 244-8492
-                    </a>
-                  </p>
+                    <p className="shrink-0 text-sm tabular-nums text-gray-400">{formData.wish_description.length}/500</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="urgency-level">Urgency</Label>
+                  <Select
+                    value={formData.urgency_level}
+                    onValueChange={(value) => handleInputChange('urgency_level', value)}
+                  >
+                    <SelectTrigger id="urgency-level" className="h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low: seeking new opportunities</SelectItem>
+                      <SelectItem value="medium">Medium: facing some challenges</SelectItem>
+                      <SelectItem value="high">High: at-risk situation</SelectItem>
+                      <SelectItem value="critical">Critical: immediate intervention needed</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            </FormSection>
+
+            {/* Files */}
+            <FormSection number={4} title="Supporting files" description="Optional. Photos, artwork samples or documents.">
+              <input
+                type="file"
+                multiple
+                accept="image/*,video/*,.pdf,.doc,.docx"
+                onChange={handleFileUpload}
+                className="peer sr-only"
+                id="file-upload"
+                disabled={isUploading}
+              />
+              <label
+                htmlFor="file-upload"
+                className={`flex cursor-pointer flex-col items-center rounded-2xl border border-dashed border-gray-300 bg-gray-50/60 px-6 py-8 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/40 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600 ${isUploading ? 'pointer-events-none opacity-60' : ''}`}
+              >
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-200">
+                  <Upload className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                </span>
+                <span className="mt-3 text-sm font-medium text-gray-900">
+                  {isUploading ? 'Uploading files…' : <><span className="text-blue-700">Choose files</span> to upload</>}
+                </span>
+                <span className="mt-1 text-xs text-gray-500">Images, video, PDF or Word · up to 10 MB each</span>
+              </label>
+              {isUploading && (
+                <div className="mt-4">
+                  <Progress value={uploadProgress} className="h-2 w-full" />
+                  <p className="mt-2 text-sm text-gray-600">{Math.round(uploadProgress)}% uploaded</p>
+                </div>
+              )}
+
+              {uploadedFiles.length > 0 && (
+                <ul className="mt-4 divide-y divide-gray-100 rounded-xl border border-gray-200/80">
+                  {uploadedFiles.map((file, index) => (
+                    <li key={index} className="flex items-center gap-3 px-4 py-3">
+                      <CheckCircle className="h-4 w-4 shrink-0 text-green-600" aria-hidden="true" />
+                      <span className="min-w-0 flex-1 truncate text-sm text-gray-700">{file.name}</span>
+                      <span className="shrink-0 text-xs tabular-nums text-gray-500">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="shrink-0 rounded-md px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </FormSection>
+
+            {/* Consent */}
+            <div className="bg-gray-50/70 px-6 py-8 sm:px-10">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="consent"
+                  name="consent"
+                  checked={hasConsented}
+                  onCheckedChange={setHasConsented}
+                  className={`mt-0.5 ${formErrors.consent ? 'border-red-500' : ''}`}
+                />
+                <div>
+                  <label htmlFor="consent" className="cursor-pointer text-sm leading-relaxed text-gray-700">
+                    I confirm that I have permission to share this information about the child above. I understand it
+                    will be kept strictly confidential and used only to assess how Team UP4S can best serve this child,
+                    and that Team UP4S may decline referrals that don&apos;t meet program criteria.
+                  </label>
+                  <FieldError message={formErrors.consent} />
+                </div>
+              </div>
+
+              <p className="mt-5 flex items-start gap-2 text-xs leading-relaxed text-gray-500">
+                <Shield className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+                Your information is never shared with third parties without your explicit consent. We comply with
+                applicable privacy laws and maintain strict confidentiality.
+              </p>
+
+              <button type="submit" disabled={isSubmitting} className={ctaClass('primary', 'lg', 'mt-8 w-full')}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                    Submitting referral…
+                  </>
+                ) : (
+                  'Submit referral'
+                )}
+              </button>
+              <div className="mt-4 text-center">{contactLine}</div>
+            </div>
+          </form>
+        </Surface>
+      </Container>
     </div>
+  );
+}
+
+function Req() {
+  return <span className="text-red-600" aria-hidden="true">*</span>;
+}
+
+function inputClass(error) {
+  return `h-11 ${error ? 'border-red-500 focus-visible:ring-red-500' : ''}`;
+}
+
+function FieldError({ message }) {
+  if (!message) return null;
+  return (
+    <p className="flex items-center gap-1 text-sm text-red-600">
+      <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+      {message}
+    </p>
+  );
+}
+
+function FormSection({ number, title, description, children }) {
+  return (
+    <fieldset className="grid grid-cols-1 gap-6 px-6 py-8 sm:px-10 lg:grid-cols-3 lg:gap-10">
+      <div>
+        <legend className="flex items-center gap-2.5 font-semibold text-gray-900">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">{number}</span>
+          {title}
+        </legend>
+        {description && <p className="mt-1.5 text-sm text-gray-500 lg:pl-8">{description}</p>}
+      </div>
+      <div className="lg:col-span-2">{children}</div>
+    </fieldset>
   );
 }

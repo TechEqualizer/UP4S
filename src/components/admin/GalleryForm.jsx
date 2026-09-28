@@ -1,4 +1,5 @@
 
+import { toast } from 'sonner';
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +69,7 @@ export default function GalleryForm({ item, onSubmit, onCancel }) {
       }));
       setThumbnailUrl(''); // Clear thumbnail for file upload
     } catch (error) {
-      alert('Error uploading file. Please try again.');
+      toast.error('Couldn’t upload the file', { description: 'Please try again.' });
     }
     setIsUploading(false);
   };

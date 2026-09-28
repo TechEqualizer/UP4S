@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { FundraisingEvent } from '@/api/entities';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Target, Users, Handshake, Mail, Phone, MapPin, Heart, Calendar } from 'lucide-react';
+import { Target, Users, Handshake, Mail, Phone, MapPin, Heart, Calendar, Clapperboard, Landmark, Gift, Loader2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import SmartImage from '@/components/ui/smart-image';
 import { formatCurrency } from '@/lib/utils';
+import { Container, Section, SectionHeading, PageHeader, Eyebrow, Surface, ctaClass } from '@/components/site/ui';
 
 export default function Fundraising() {
   const [events, setEvents] = useState([]);
@@ -47,7 +47,7 @@ export default function Fundraising() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    alert('Thank you for your interest in volunteering! We\'ll be in touch soon.');
+    toast.success('Thanks for offering to help!', { description: 'We’ll be in touch soon.' });
     setVolunteerForm({
       name: '',
       email: '',
@@ -78,36 +78,65 @@ export default function Fundraising() {
     window.dispatchEvent(customEvent);
   };
 
+  const openDonate = () => window.dispatchEvent(new CustomEvent('openDonationModal'));
+  const updateForm = (field) => (e) => setVolunteerForm({ ...volunteerForm, [field]: e.target.value });
+
+  const opportunities = [
+    { icon: Clapperboard, title: "Film & media mentorship", description: "Guide students through the filmmaking process, from concept to final cut." },
+    { icon: Users, title: "Event support", description: "Help with fundraising events, film screenings and community gatherings." },
+    { icon: Handshake, title: "Administrative support", description: "Assist with marketing, social media, grant writing and daily operations." },
+  ];
+
+  const givingOptions = [
+    { icon: Handshake, title: "Corporate sponsorships", description: "Sponsor specific programs, events or equipment purchases." },
+    { icon: Landmark, title: "Planned giving", description: "Leave a lasting legacy through estate planning and planned giving." },
+    { icon: Gift, title: "Major donations", description: "Large individual gifts that can fund entire programs or facilities." },
+  ];
+
+  const contact = [
+    { icon: Mail, label: "Email", value: "teamup4smi@gmail.com", href: "mailto:teamup4smi@gmail.com" },
+    { icon: Phone, label: "Phone", value: "586-244-8492", href: "tel:5862448492" },
+    { icon: MapPin, label: "Mailing address", value: <>PO Box 480012<br />New Haven, MI 48048</> },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Fundraising Events Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-              Fundraising <span className="gradient-text">Events &amp; Initiatives</span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Support specific initiatives that directly impact the youth we serve. Every dollar brings us closer to our goals.
-            </p>
-          </div>
+      <PageHeader
+        eyebrow="Support us"
+        title="Help a young creator tell their story"
+        lede="Give to a specific initiative, volunteer your skills, or partner with us to expand what's possible for youth in Metro Detroit."
+      >
+        <button type="button" onClick={openDonate} className={ctaClass('primary', 'lg')}>
+          <Heart className="h-5 w-5" aria-hidden="true" /> Give now
+        </button>
+        <a href="#volunteer-section" className={ctaClass('secondary', 'lg')}>Volunteer with us</a>
+      </PageHeader>
+
+      {/* Fundraising events */}
+      <Section>
+        <Container>
+          <SectionHeading
+            eyebrow="Current initiatives"
+            title="Fundraising events"
+            lede="Support initiatives that directly impact the youth we serve. Every dollar brings us closer to our goals."
+          />
 
           {isLoadingEvents ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array(3).fill(0).map((_, i) => (
-                <Card key={i} className="overflow-hidden animate-pulse">
-                  <div className="aspect-video bg-gray-200"></div>
-                  <CardHeader><div className="h-6 bg-gray-200 rounded w-3/4"></div></CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                    <div className="h-10 bg-gray-200 rounded mt-4"></div>
-                  </CardContent>
-                </Card>
+                <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-gray-200/80">
+                  <div className="aspect-video bg-gray-100" />
+                  <div className="space-y-3 p-6">
+                    <div className="h-5 w-3/4 rounded bg-gray-100" />
+                    <div className="h-4 rounded bg-gray-100" />
+                    <div className="h-4 w-5/6 rounded bg-gray-100" />
+                    <div className="mt-6 h-11 rounded-full bg-gray-100" />
+                  </div>
+                </div>
               ))}
             </div>
           ) : events.length > 0 ? (
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 ${events.length >= 3 ? 'lg:grid-cols-3' : 'max-w-5xl mx-auto'}`}>
+            <div className={`grid grid-cols-1 gap-6 md:grid-cols-2 ${events.length >= 3 ? 'lg:grid-cols-3' : 'mx-auto max-w-5xl'}`}>
               {events.map((event) => {
                 const goal = Number(event.fundraising_goal) || 0;
                 const raised = Number(event.amount_raised) || 0;
@@ -116,29 +145,27 @@ export default function Fundraising() {
                 const isExpanded = expandedEvents.has(event.id);
                 const isLong = (event.description || '').length > 220;
                 return (
-                  <Card key={event.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                  <Surface as="article" key={event.id} className="flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-xl hover:shadow-gray-900/[0.06]">
                     {event.image_url && (
-                      <div className="aspect-video relative overflow-hidden">
-                        <SmartImage src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
+                      <div className="relative aspect-video overflow-hidden bg-gray-100">
+                        <SmartImage src={event.image_url} alt={event.title} className="absolute inset-0 h-full w-full object-cover" />
                         {isPast && (
-                          <span className="absolute top-3 left-3 bg-gray-900/80 text-white text-xs font-semibold px-2.5 py-1 rounded-full">Past event</span>
+                          <span className="absolute left-3 top-3 rounded-full bg-gray-950/80 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">Past event</span>
                         )}
                       </div>
                     )}
-                    <CardHeader>
-                      <CardTitle className="text-xl">{event.title}</CardTitle>
-                      <div className="flex flex-wrap items-center text-sm text-gray-500 gap-x-4 gap-y-1 mt-2">
+                    <div className="flex flex-1 flex-col p-6">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
                         {event.event_date && (
-                          <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {format(new Date(event.event_date), 'MMM d, yyyy')}</span>
+                          <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" aria-hidden="true" /> {format(new Date(event.event_date), 'EEE, MMM d, yyyy')}</span>
                         )}
                         {event.location && (
-                          <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {event.location}</span>
+                          <span className="flex min-w-0 items-center gap-1.5"><MapPin className="h-4 w-4 shrink-0" aria-hidden="true" /> <span className="truncate">{event.location}</span></span>
                         )}
                       </div>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex flex-col">
-                      <div className="mb-6 flex-grow">
-                        <p className={`text-gray-600 leading-relaxed whitespace-pre-line ${isLong && !isExpanded ? 'line-clamp-4' : ''}`}>
+                      <h3 className="mt-3 font-display text-xl font-semibold tracking-tight text-gray-900">{event.title}</h3>
+                      <div className="mt-3 flex-1">
+                        <p className={`whitespace-pre-line leading-relaxed text-gray-600 ${isLong && !isExpanded ? 'line-clamp-4' : ''}`}>
                           {event.description}
                         </p>
                         {isLong && (
@@ -146,275 +173,208 @@ export default function Fundraising() {
                             type="button"
                             onClick={() => toggleEvent(event.id)}
                             aria-expanded={isExpanded}
-                            className="mt-2 text-sm font-semibold text-blue-700 hover:text-blue-800 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                            className="mt-2 rounded text-sm font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                           >
                             {isExpanded ? 'Show less' : 'Read more'}
                           </button>
                         )}
                       </div>
-                      <div>
-                        <div className="flex justify-between items-center mb-2 text-sm">
-                          <span className="text-gray-600">Raised</span>
-                          <span className="font-medium text-gray-800">
-                            <span className="text-base font-bold text-gray-900">{formatCurrency(raised)}</span> of {formatCurrency(goal)}
-                          </span>
+
+                      <div className="mt-6 rounded-xl bg-gray-50 p-4">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="font-display text-2xl font-bold tabular-nums tracking-tight text-gray-900">{formatCurrency(raised)}</span>
+                          <span className="text-sm text-gray-500">{goal > 0 ? `of ${formatCurrency(goal)} goal` : 'raised'}</span>
                         </div>
-                        <Progress value={progressPercentage} className="h-3" />
-                        <p className="text-xs text-gray-500 mt-1">{progressPercentage.toFixed(0)}% of goal reached</p>
+                        {goal > 0 && (
+                          <>
+                            <Progress value={progressPercentage} className="mt-3 h-2" />
+                            <p className="mt-2 text-xs font-medium text-gray-500">{progressPercentage.toFixed(0)}% of goal reached</p>
+                          </>
+                        )}
                       </div>
+
                       {isPast ? (
-                        <Button onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))} variant="outline" className="w-full mt-6">
-                          <Heart className="w-4 h-4 mr-2" /> Donate to UP4S
-                        </Button>
+                        <button type="button" onClick={openDonate} className={ctaClass('secondary', 'md', 'mt-5 w-full')}>
+                          <Heart className="h-4 w-4" aria-hidden="true" /> Donate to UP4S
+                        </button>
                       ) : (
-                        <Button onClick={() => handleEventDonate(event)} className="w-full mt-6 bg-blue-600 hover:bg-blue-700">
-                          <Heart className="w-4 h-4 mr-2" /> Support This Event
-                        </Button>
+                        <button type="button" onClick={() => handleEventDonate(event)} className={ctaClass('primary', 'md', 'mt-5 w-full shadow-md')}>
+                          <Heart className="h-4 w-4" aria-hidden="true" /> Support this event
+                        </button>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </Surface>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center py-16 border-2 border-dashed rounded-lg border-gray-200">
-              <Target className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No Active Events</h3>
-              <p className="text-gray-500">Fundraising events will appear here as they are launched. Please check back soon!</p>
+            <div className="rounded-2xl border border-dashed border-gray-300 px-6 py-16 text-center">
+              <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                <Target className="h-6 w-6 text-gray-400" aria-hidden="true" />
+              </span>
+              <h3 className="font-semibold text-gray-900">No active events right now</h3>
+              <p className="mt-1 text-gray-600">New fundraising events will appear here as they launch. You can still give to our general fund.</p>
+              <button type="button" onClick={openDonate} className={ctaClass('primary', 'md', 'mt-6')}>
+                <Heart className="h-4 w-4" aria-hidden="true" /> Donate
+              </button>
             </div>
           )}
-        </div>
-      </section>
+        </Container>
+      </Section>
 
-      {/* Volunteer Opportunities */}
-      <section id="volunteer-section" className="py-24 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-                Volunteer <span className="gradient-text">With Us</span>
-              </h2>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Share your skills, time, and passion to directly impact young lives. 
-                Whether you're a filmmaker, mentor, or just someone who cares, there's a place for you.
-              </p>
-
-              <div className="space-y-6">
-                {[
-                  {
-                    icon: Target,
-                    title: "Film & Media Mentorship",
-                    description: "Guide students through the filmmaking process, from concept to final cut."
-                  },
-                  {
-                    icon: Users,
-                    title: "Event Support",
-                    description: "Help with fundraising events, film screenings, and community gatherings."
-                  },
-                  {
-                    icon: Handshake,
-                    title: "Administrative Support",
-                    description: "Assist with marketing, social media, grant writing, and daily operations."
-                  }
-                ].map((opportunity) => (
-                  <div key={opportunity.title} className="flex gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex-shrink-0 flex items-center justify-center">
-                      <opportunity.icon className="w-6 h-6 text-white" />
-                    </div>
+      {/* Volunteer */}
+      <Section tone="muted" id="volunteer-section" className="scroll-mt-20">
+        <Container>
+          <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2 lg:gap-16">
+            <div className="lg:sticky lg:top-28">
+              <SectionHeading
+                align="left"
+                className="mb-10"
+                eyebrow="Get involved"
+                title="Volunteer with us"
+                lede="Share your skills, time and passion to directly impact young lives. Filmmaker, mentor or simply someone who cares, there's a place for you."
+              />
+              <ul className="space-y-7">
+                {opportunities.map((opportunity) => (
+                  <li key={opportunity.title} className="flex gap-4">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm ring-1 ring-gray-200/80">
+                      <opportunity.icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
                     <div>
-                      <h3 className="font-bold text-gray-900 mb-2">{opportunity.title}</h3>
-                      <p className="text-gray-600">{opportunity.description}</p>
+                      <h3 className="font-semibold text-gray-900">{opportunity.title}</h3>
+                      <p className="mt-1 leading-relaxed text-gray-600">{opportunity.description}</p>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Express Your Interest</CardTitle>
-                <p className="text-gray-600">Tell us how you'd like to get involved with UP4S.</p>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleVolunteerSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="volunteer-name">Name *</Label>
-                      <Input
-                        id="volunteer-name"
-                        required
-                        value={volunteerForm.name}
-                        onChange={(e) => setVolunteerForm({...volunteerForm, name: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="volunteer-email">Email *</Label>
-                      <Input
-                        id="volunteer-email"
-                        type="email"
-                        required
-                        value={volunteerForm.email}
-                        onChange={(e) => setVolunteerForm({...volunteerForm, email: e.target.value})}
-                      />
-                    </div>
+            <Surface className="p-6 shadow-xl shadow-gray-900/[0.04] sm:p-8">
+              <h3 className="font-display text-xl font-semibold text-gray-900">Express your interest</h3>
+              <p className="mt-1 text-gray-600">Tell us how you&apos;d like to get involved with UP4S.</p>
+              <form onSubmit={handleVolunteerSubmit} className="mt-8 space-y-5">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="volunteer-name">Name <span className="text-red-600" aria-hidden="true">*</span></Label>
+                    <Input id="volunteer-name" required autoComplete="name" className="h-11" value={volunteerForm.name} onChange={updateForm('name')} />
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="volunteer-phone">Phone</Label>
-                    <Input
-                      id="volunteer-phone"
-                      type="tel"
-                      value={volunteerForm.phone}
-                      onChange={(e) => setVolunteerForm({...volunteerForm, phone: e.target.value})}
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="volunteer-email">Email <span className="text-red-600" aria-hidden="true">*</span></Label>
+                    <Input id="volunteer-email" type="email" required autoComplete="email" className="h-11" value={volunteerForm.email} onChange={updateForm('email')} />
                   </div>
+                </div>
 
-                  <div>
-                    <Label htmlFor="volunteer-interests">Areas of Interest</Label>
-                    <Select 
-                      value={volunteerForm.interests}
-                      onValueChange={(value) => setVolunteerForm({...volunteerForm, interests: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your primary interest" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="mentorship">Film & Media Mentorship</SelectItem>
-                        <SelectItem value="events">Event Support</SelectItem>
-                        <SelectItem value="admin">Administrative Support</SelectItem>
-                        <SelectItem value="fundraising">Fundraising</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="volunteer-phone">Phone</Label>
+                  <Input id="volunteer-phone" type="tel" autoComplete="tel" className="h-11" value={volunteerForm.phone} onChange={updateForm('phone')} />
+                </div>
 
-                  <div>
-                    <Label htmlFor="volunteer-experience">Relevant Experience</Label>
-                    <Textarea
-                      id="volunteer-experience"
-                      placeholder="Tell us about your background and skills..."
-                      value={volunteerForm.experience}
-                      onChange={(e) => setVolunteerForm({...volunteerForm, experience: e.target.value})}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="volunteer-availability">Availability</Label>
-                    <Textarea
-                      id="volunteer-availability"
-                      placeholder="When are you typically available? (days, times, frequency)"
-                      value={volunteerForm.availability}
-                      onChange={(e) => setVolunteerForm({...volunteerForm, availability: e.target.value})}
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-gradient-to-r from-purple-600 to-purple-700"
+                <div className="space-y-2">
+                  <Label htmlFor="volunteer-interests">Area of interest</Label>
+                  <Select
+                    value={volunteerForm.interests}
+                    onValueChange={(value) => setVolunteerForm({ ...volunteerForm, interests: value })}
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Interest'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
+                    <SelectTrigger id="volunteer-interests" className="h-11">
+                      <SelectValue placeholder="Select your primary interest" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mentorship">Film &amp; media mentorship</SelectItem>
+                      <SelectItem value="events">Event support</SelectItem>
+                      <SelectItem value="admin">Administrative support</SelectItem>
+                      <SelectItem value="fundraising">Fundraising</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-      {/* Major Gifts & Partnerships */}
-      <section className="py-24 bg-blue-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div className="space-y-2">
+                  <Label htmlFor="volunteer-experience">Relevant experience</Label>
+                  <Textarea
+                    id="volunteer-experience"
+                    rows={3}
+                    placeholder="Tell us about your background and skills"
+                    value={volunteerForm.experience}
+                    onChange={updateForm('experience')}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="volunteer-availability">Availability</Label>
+                  <Textarea
+                    id="volunteer-availability"
+                    rows={2}
+                    placeholder="Days, times and how often you're available"
+                    value={volunteerForm.availability}
+                    onChange={updateForm('availability')}
+                  />
+                </div>
+
+                <button type="submit" disabled={isSubmitting} className={ctaClass('primary', 'lg', 'w-full')}>
+                  {isSubmitting ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Submitting…</> : 'Submit interest'}
+                </button>
+              </form>
+            </Surface>
+          </div>
+        </Container>
+      </Section>
+
+      {/* Major gifts & partnerships */}
+      <Section tone="dark" className="relative isolate overflow-hidden">
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(50rem_30rem_at_85%_10%,rgba(37,99,235,0.35),transparent_70%)]" />
+        <Container>
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-                Major Gifts & <span className="text-yellow-400">Corporate Partnerships</span>
-              </h2>
-              <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-                Ready to make a transformational impact? We welcome conversations about 
-                major gifts, corporate sponsorships, and strategic partnerships that can 
-                help us expand our reach and deepen our impact in the community.
-              </p>
-              
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <Handshake className="w-6 h-6 text-yellow-400 mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-bold mb-2">Corporate Sponsorships</h3>
-                    <p className="text-blue-100">Partner with us to sponsor specific programs, events, or equipment purchases.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <Target className="w-6 h-6 text-yellow-400 mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-bold mb-2">Planned Giving</h3>
-                    <p className="text-blue-100">Leave a lasting legacy through estate planning and planned giving options.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <Target className="w-6 h-6 text-yellow-400 mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-bold mb-2">Major Donations</h3>
-                    <p className="text-blue-100">Large individual gifts that can fund entire programs or facilities.</p>
-                  </div>
-                </div>
-              </div>
+              <SectionHeading
+                align="left"
+                tone="dark"
+                className="mb-10"
+                eyebrow="Major gifts"
+                title="Corporate partnerships & major gifts"
+                lede="Ready to make a transformational impact? We welcome conversations about major gifts, sponsorships and strategic partnerships that expand our reach in the community."
+              />
+              <ul className="space-y-6">
+                {givingOptions.map((option) => (
+                  <li key={option.title} className="flex gap-4">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/5 text-yellow-400 ring-1 ring-white/10">
+                      <option.icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <h3 className="font-semibold text-white">{option.title}</h3>
+                      <p className="mt-1 text-gray-400">{option.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <Card className="bg-white/10 border-white/20 text-white">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold mb-6 text-center">Let's Talk</h3>
-                <div className="space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <Mail className="w-6 h-6 text-blue-900" />
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur sm:p-10">
+              <Eyebrow tone="dark">Let&apos;s talk</Eyebrow>
+              <h3 className="mt-3 font-display text-2xl font-semibold text-white">Start a conversation</h3>
+              <ul className="mt-8 space-y-5">
+                {contact.map((item) => (
+                  <li key={item.label} className="flex items-start gap-4">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-gray-950">
+                      <item.icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-400">{item.label}</p>
+                      {item.href ? (
+                        <a href={item.href} className="break-all font-medium text-white hover:text-yellow-300">{item.value}</a>
+                      ) : (
+                        <p className="font-medium text-white">{item.value}</p>
+                      )}
                     </div>
-                    <div>
-                      <p className="font-semibold">Email</p>
-                      <a href="mailto:teamup4smi@gmail.com" className="text-yellow-400 hover:text-yellow-300">
-                        teamup4smi@gmail.com
-                      </a>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <Phone className="w-6 h-6 text-blue-900" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">Phone</p>
-                      <a href="tel:5862448492" className="text-yellow-400 hover:text-yellow-300">
-                        586-244-8492
-                      </a>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <MapPin className="w-6 h-6 text-blue-900" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">Mailing Address</p>
-                      <p className="text-blue-100">
-                        PO Box 480012<br />
-                        New Haven, MI 48048
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-8 pt-6 border-t border-white/20">
-                  <p className="text-sm text-blue-100 text-center">
-                    All major gift discussions are handled personally by our founder, 
-                    Wendy Anderson, to ensure your philanthropic goals align perfectly 
-                    with our mission.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-8 border-t border-white/10 pt-6 text-sm leading-relaxed text-gray-400">
+                Major gift discussions are handled personally by our founder, Wendy Anderson, so your philanthropic goals align with our mission.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
     </div>
   );
 }

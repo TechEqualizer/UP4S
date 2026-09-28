@@ -1,17 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Heart, CreditCard, Loader2, Lock } from 'lucide-react';
 import { createStripeCheckout } from '@/api/functions';
+import { ctaClass } from '@/components/site/ui';
 
 const PRESET_AMOUNTS = [25, 50, 100, 250, 500];
 
 const inputClass =
-  'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition disabled:bg-gray-50';
+  'h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-gray-900 shadow-sm transition placeholder:text-gray-400 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/10 disabled:bg-gray-50';
 
 function choiceClass(selected) {
-  return `p-3 rounded-lg border-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 ${
+  return `h-12 rounded-xl border font-semibold tabular-nums transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-600/15 ${
     selected
-      ? 'border-blue-600 bg-blue-50 text-blue-700'
-      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+      ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600'
+      : 'border-gray-300 bg-white text-gray-700 shadow-sm hover:border-gray-400'
   }`;
 }
 
@@ -109,7 +110,7 @@ export default function DonationModal({ isOpen, onClose, event }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center sm:p-4 animate-fade-in"
+      className="fixed inset-0 bg-gray-950/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4 animate-fade-in"
       onClick={() => !isProcessing && onClose()}
     >
       <div
@@ -118,7 +119,7 @@ export default function DonationModal({ isOpen, onClose, event }) {
         aria-modal="true"
         aria-labelledby="donation-title"
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 relative max-h-[92vh] overflow-y-auto shadow-2xl"
+        className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 relative max-h-[92vh] overflow-y-auto shadow-2xl ring-1 ring-black/5"
       >
         <button
           type="button"
@@ -131,10 +132,10 @@ export default function DonationModal({ isOpen, onClose, event }) {
         </button>
 
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/20">
-            <Heart className="w-7 h-7 text-white" aria-hidden="true" />
+          <div className="w-12 h-12 bg-blue-50 ring-1 ring-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Heart className="w-6 h-6 text-blue-600" aria-hidden="true" />
           </div>
-          <h2 id="donation-title" className="text-2xl font-bold text-gray-900 mb-2">Make a Donation</h2>
+          <h2 id="donation-title" className="font-display text-2xl font-bold tracking-tight text-gray-900 mb-2">Make a donation</h2>
           <p className="text-gray-600">
             {event
               ? <>Supporting <span className="font-semibold text-gray-900">{event.title}</span></>
@@ -237,7 +238,7 @@ export default function DonationModal({ isOpen, onClose, event }) {
           <button
             type="submit"
             disabled={isProcessing}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
+            className={ctaClass('primary', 'lg', 'w-full disabled:cursor-not-allowed')}
           >
             {isProcessing ? (
               <>
