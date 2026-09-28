@@ -12,7 +12,32 @@
   }
   h1, h2, h3 {
     @apply font-display tracking-tight;
+    font-optical-sizing: auto;
+    text-wrap: balance;
   }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: rgb(250 204 21 / 0.45);
+    color: rgb(17 24 39);
+  }
+}
+
+@layer components {
+  /* Serif italic accent inside display headings: "Dreams made <em class="accent">real</em>" */
+  .accent {
+    font-family: theme('fontFamily.serif');
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    font-size: 1.06em;
+    line-height: 0.9;
+    padding-right: 0.04em; /* keep the italic overhang off the next word */
+  }
+}
+
+@layer base {
   /* Respect the OS "reduce motion" setting */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

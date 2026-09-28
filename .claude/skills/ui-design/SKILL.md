@@ -14,8 +14,7 @@ decoration. Keep the existing colour theme; do not introduce new brand colours.
 - **Colour.** Primary action = `blue-600` (hover `blue-700`); the public hero/CTA gradient is
   `from-blue-600 to-blue-700`. Neutrals are Tailwind `gray`. Status colours only via
   `StatusBadge` tones (`green`, `yellow`, `blue`, `purple`, `orange`, `red`, `gray`).
-- **Type.** Body is Inter (`font-sans`); headings use Plus Jakarta Sans (`font-display`),
-  `font-semibold tracking-tight`. Admin: page title `text-lg sm:text-xl`, section title
+- **Type.** See Typography below. Admin: page title `text-lg sm:text-xl`, section title
   `text-base`, panel title `text-sm font-semibold`, meta text `text-xs text-gray-500`.
   Money and counts use `tabular-nums`.
 - **Spacing.** 4px grid. Card padding `p-4`/`p-5`; list rows `px-5 py-3`/`py-3.5`; gaps between
@@ -23,6 +22,29 @@ decoration. Keep the existing colour theme; do not introduce new brand colours.
 - **Surfaces.** `rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]`.
   Hover lift = `hover:shadow-md`, never scale the whole card. Admin page background `bg-gray-50/70`.
 - **Focus.** Every interactive element needs a visible `focus-visible:ring-2 ring-blue-600`.
+
+## Typography
+
+Three self-hosted families (loaded in `src/main.jsx` via `@fontsource`, no Google Fonts):
+
+| Role | Family | Tailwind | Use |
+| --- | --- | --- | --- |
+| Display | Bricolage Grotesque (variable, optical size) | `font-display` | h1–h3, big numbers |
+| Accent | Instrument Serif *italic* | `.accent` / `<Accent>` | 1–4 words inside a display heading |
+| Body | Figtree (variable) | `font-sans` (default) | everything else |
+
+- Display sizes are fluid: `text-display-2xl` (homepage hero only), `text-display-xl` (page h1),
+  `text-display-lg` (section h2, CTA band), `text-display-md`. They carry their own line-height
+  and negative tracking; don't add `tracking-tight`/`leading-*` on top.
+- Weights: hero `font-extrabold`; other display headings `font-bold`; card titles
+  `font-display text-xl/2xl font-bold tracking-tight`.
+- Accent: `<Accent>` (blue) on light backgrounds, `<Accent tone="gold">` on dark/blue. One accent
+  per heading, on the emotional phrase ("Dreams made *real*"). Never accent body text or buttons.
+  Pull quotes use `font-serif italic`.
+- Eyebrows (`Eyebrow`): tiny bold uppercase with wide tracking and a short leading rule.
+- Ledes are `text-lg`, `text-gray-600`, max ~65 characters per line.
+- New font-size utilities must be registered in `extendTailwindMerge` in `src/lib/utils.js`, or
+  `cn()` will drop them as if they were colours.
 
 ## Media (the #1 source of broken layouts)
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CheckCircle, Home, ArrowRight } from 'lucide-react';
-import { Surface, ctaClass } from '@/components/site/ui';
+import { Surface, Accent, ctaClass } from '@/components/site/ui';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/index';
 
@@ -41,7 +41,7 @@ export default function DonationSuccess() {
           <CheckCircle className="h-8 w-8 text-green-600" aria-hidden="true" />
         </span>
         <h1 className="mt-8 text-balance font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          Thank you for your generous gift
+          Thank you for your <Accent>generous gift</Accent>
         </h1>
         <p className="mx-auto mt-4 max-w-lg text-lg leading-relaxed text-gray-600">
           Your donation will make a real difference for young people in our community.

@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import SmartImage from '@/components/ui/smart-image';
 import { formatCurrency } from '@/lib/utils';
-import { Container, Section, SectionHeading, PageHeader, Eyebrow, Surface, ctaClass } from '@/components/site/ui';
+import { Container, Section, SectionHeading, PageHeader, Eyebrow, Surface, Accent, ctaClass } from '@/components/site/ui';
 
 export default function Fundraising() {
   const [events, setEvents] = useState([]);
@@ -116,7 +116,7 @@ export default function Fundraising() {
     <div className="min-h-screen bg-white">
       <PageHeader
         eyebrow="Support us"
-        title="Help a young creator tell their story"
+        title={<>Help a young creator <Accent>tell their story</Accent></>}
         lede="Give to a specific initiative, volunteer your skills, or partner with us to expand what's possible for youth in Metro Detroit."
       >
         <button type="button" onClick={openDonate} className={ctaClass('primary', 'lg')}>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GalleryItem } from '@/api/entities';
 import { Heart, ArrowRight, Camera, Users, Target, ShieldCheck, MapPin, Clapperboard } from 'lucide-react';
 import { MediaCard, MediaLightbox } from '@/components/gallery/MediaCard';
-import { Container, Section, SectionHeading, CtaBand, ctaClass } from '@/components/site/ui';
+import { Container, Section, SectionHeading, CtaBand, Accent, ctaClass } from '@/components/site/ui';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/index';
 import CountUp from '@/components/site/CountUp';
@@ -121,15 +121,15 @@ export default function Homepage() {
 
               <Container className="relative flex h-full items-end pb-24 sm:pb-28">
                 <div
-                  className={`max-w-3xl transition-all duration-1000 ease-out ${active ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                  className={`max-w-4xl transition-all duration-1000 ease-out ${active ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                 >
                   <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
                     <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" aria-hidden="true" />
                     501(c)(3) nonprofit · Metro Detroit
                   </p>
-                  <h1 className="text-balance font-display text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
+                  <h1 className="font-display text-display-2xl font-extrabold text-white">
                     {slide.title}
-                    <span className="block text-yellow-400">{slide.subtitle}</span>
+                    <span className="accent mt-1 block text-yellow-400">{slide.subtitle}</span>
                   </h1>
                   <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-gray-200 sm:text-xl">
                     {slide.description}
@@ -179,7 +179,7 @@ export default function Homepage() {
                 className={`flex flex-col px-4 py-10 text-center sm:py-12 ${index < 2 ? 'border-b border-gray-100 lg:border-b-0' : ''} ${index % 2 === 0 ? 'border-r border-gray-100 lg:border-r-0' : ''}`}
               >
                 <dt className="order-2 mt-2 text-sm font-medium text-gray-500">{stat.label}</dt>
-                <dd className="order-1 font-display text-4xl font-bold tracking-tight text-gray-900 tabular-nums sm:text-5xl"><CountUp value={stat.number} from={/^\d{4}$/.test(stat.number) ? 2000 : 0} delay={index * 120} /></dd>
+                <dd className="order-1 font-display text-5xl font-extrabold tracking-[-0.025em] text-gray-900 tabular-nums sm:text-6xl"><CountUp value={stat.number} from={/^\d{4}$/.test(stat.number) ? 2000 : 0} delay={index * 120} /></dd>
               </div>
             ))}
           </dl>
@@ -191,7 +191,7 @@ export default function Homepage() {
         <Container>
           <SectionHeading
             eyebrow="Our approach"
-            title="How we create tomorrow’s voices"
+            title={<>How we create <Accent>tomorrow’s voices</Accent></>}
             lede="A three-part approach that gives young people in Metro Detroit professional tools, expert guidance and a stage for the stories only they can tell."
           />
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
@@ -206,7 +206,7 @@ export default function Homepage() {
                   </span>
                   <span className="font-display text-sm font-semibold tabular-nums text-gray-300">0{index + 1}</span>
                 </div>
-                <h3 className="mt-8 font-display text-xl font-semibold text-gray-900">{pillar.title}</h3>
+                <h3 className="mt-8 font-display text-2xl font-bold tracking-tight text-gray-900">{pillar.title}</h3>
                 <p className="mt-3 leading-relaxed text-gray-600">{pillar.description}</p>
               </div>
             ))}
@@ -220,7 +220,7 @@ export default function Homepage() {
           <SectionHeading
             align="left"
             eyebrow="Success stories"
-            title="Dreams made real"
+            title={<>Dreams made <Accent>real</Accent></>}
             lede="Films, photos and art created by the amazing kids we serve."
             action={
               <Link to={createPageUrl("Gallery")} className={ctaClass('secondary', 'md')}>
@@ -268,7 +268,7 @@ export default function Homepage() {
       {/* Call to action */}
       <CtaBand
         eyebrow="Make a difference today"
-        title="Ready to change a life?"
+        title={<>Ready to change <Accent tone="gold">a life?</Accent></>}
         lede="Your support doesn’t just fund equipment. It provides a safe space, real skills and a new direction, moving young people from the streets and into the studio."
         footer={<>
           <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" aria-hidden="true" /> Secure checkout by Stripe</span>

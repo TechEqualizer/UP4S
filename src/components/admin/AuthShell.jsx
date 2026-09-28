@@ -25,7 +25,7 @@ export default function AuthShell({ children }) {
 
         <div className="mt-auto p-10 pb-12">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-yellow-400">Team UP4S admin</p>
-          <blockquote className="mt-4 max-w-md text-balance font-display text-3xl font-semibold leading-tight tracking-tight text-white">
+          <blockquote className="mt-4 max-w-md text-balance font-serif text-4xl italic leading-[1.1] text-white">
             Every child deserves to tell their story.
           </blockquote>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-gray-300">

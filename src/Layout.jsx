@@ -369,7 +369,6 @@ export default function Layout({ children, currentPageName }) {
                 <ul className="mt-4 space-y-3">
                   <li><Link to={createPageUrl("PrivacyPolicy")} className={footerLink}>Privacy policy</Link></li>
                   <li><Link to={createPageUrl("TermsOfService")} className={footerLink}>Terms of service</Link></li>
-                  <li><Link to={createPageUrl("AdminDashboard")} className={footerLink}>Admin sign in</Link></li>
                 </ul>
                 <p className="mt-6 text-xs leading-relaxed text-gray-500">
                   501(c)(3) nonprofit · EIN 92-2415944. Donations are tax-deductible to the full extent allowed by law.

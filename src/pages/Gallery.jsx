@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GalleryItem } from '@/api/entities';
 import { Camera } from 'lucide-react';
 import { MediaCard, MediaLightbox } from '@/components/gallery/MediaCard';
-import { Container, PageHeader } from '@/components/site/ui';
+import { Container, PageHeader, Accent } from '@/components/site/ui';
 
 export default function Gallery() {
   const [galleryItems, setGalleryItems] = useState([]);
@@ -51,7 +51,7 @@ export default function Gallery() {
     <div className="min-h-screen bg-white">
       <PageHeader
         eyebrow="Our impact"
-        title="Dreams made real"
+        title={<>Dreams made <Accent>real</Accent></>}
         lede="Films, artwork and creative projects made by the children we serve. Each piece tells a story of courage, creativity and hope."
       />
 
