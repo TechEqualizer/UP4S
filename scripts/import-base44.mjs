@@ -4,6 +4,7 @@
 //   SUPABASE_URL=https://<ref>.supabase.co SUPABASE_SERVICE_ROLE_KEY=... \
 //   [STRIPE_SECRET_KEY=sk_live_...] \
 //   node scripts/import-base44.mjs <folder with *_export.csv files> [--dry-run] [--skip-media]
+//     [--keep-test-donations]
 //
 // - Records are matched on their Base44 id (newsletter subscribers on email), so
 //   re-running only adds what's new; rows already in Supabase are left untouched.
@@ -12,6 +13,8 @@
 //   when the Base44 app is deleted. --skip-media keeps the Base44 links.
 // - With STRIPE_SECRET_KEY set, donations still marked pending are checked against
 //   Stripe and marked completed/expired to match what actually happened.
+// - Donations of $1 or less were checkout tests and are skipped (each is listed);
+//   --keep-test-donations imports them too.
 // - --dry-run reads everything and prints what would be imported, writing nothing.
 
 import fs from 'node:fs';
@@ -21,6 +24,8 @@ import { createClient } from '@supabase/supabase-js';
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const skipMedia = args.includes('--skip-media');
+const keepTestDonations = args.includes('--keep-test-donations');
+const TEST_DONATION_MAX = 1;
 const folder = args.find((a) => !a.startsWith('--'));
 
 if (!folder) {
@@ -268,7 +273,12 @@ async function importDonations(eventIds) {
   const rows = [];
   const reconciled = { completed: 0, expired: 0, pending: 0 };
 
+  const skipped = [];
   for (const r of records.filter((r) => !existing.has(r.id))) {
+    if (!keepTestDonations && num(r.amount) <= TEST_DONATION_MAX) {
+      skipped.push(r);
+      continue;
+    }
     const stripeId = text(r.stripe_payment_id);
     let paymentStatus = oneOf(r.payment_status, ['pending', 'completed', 'failed', 'expired', 'refunded'], 'pending');
     let paymentIntent = stripeId?.startsWith('pi_') ? stripeId : null;
@@ -301,6 +311,11 @@ async function importDonations(eventIds) {
       created_date: timestamp(r.created_date),
       updated_date: timestamp(r.updated_date),
     });
+  }
+
+  if (skipped.length > 0) {
+    console.log(`  Skipping ${skipped.length} test donation(s) of $${TEST_DONATION_MAX} or less (--keep-test-donations to include):`);
+    skipped.forEach((r) => console.log(`    ${r.created_date.slice(0, 10)}  $${r.amount}  ${r.donor_name} <${r.donor_email}>`));
   }
 
   await insertRows('donations', rows);

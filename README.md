@@ -76,6 +76,7 @@ Drop `--dry-run` to import. The script:
 
 - copies images and files hosted by Base44 into Supabase Storage and rewrites the links, since they disappear when the Base44 app is deleted (run it from a machine that can reach `base44.app`);
 - checks donations still marked pending against Stripe when `STRIPE_SECRET_KEY` is set;
+- skips donations of $1 or less, which were checkout tests (`--keep-test-donations` to include them);
 - matches records on their Base44 id, so it's safe to re-run just before switching over to pick up anything new.
 
 Keep the CSV exports out of git: they contain donor and subscriber contact details.
