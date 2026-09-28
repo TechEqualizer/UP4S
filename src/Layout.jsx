@@ -8,6 +8,20 @@ import { ctaClass } from "@/components/site/ui";
 import DonationModal from "@/components/donation/DonationModal";
 import { useAuth, signOut } from "@/lib/auth";
 
+// Browser-tab / search-result titles per page.
+const PAGE_TITLES = {
+  Homepage: "Team UP4S · Film & media arts for Metro Detroit youth",
+  About: "About us · Team UP4S",
+  Gallery: "Gallery · Team UP4S",
+  Fundraising: "Support us · Team UP4S",
+  ReferKid: "Refer a kid · Team UP4S",
+  PrivacyPolicy: "Privacy policy · Team UP4S",
+  TermsOfService: "Terms of service · Team UP4S",
+  DonationSuccess: "Thank you · Team UP4S",
+  AdminDashboard: "Admin · Team UP4S",
+  Login: "Sign in · Team UP4S",
+};
+
 const NAV_ITEMS = [
   { label: "Home", page: "Homepage" },
   { label: "About", page: "About" },
@@ -42,6 +56,10 @@ export default function Layout({ children, currentPageName }) {
       window.removeEventListener('openDonationModal', handleOpenModal);
     };
   }, []);
+
+  useEffect(() => {
+    document.title = PAGE_TITLES[currentPageName] ?? "Team UP4S";
+  }, [currentPageName]);
 
   // Scroll to top and close the mobile menu on page navigation
   useEffect(() => {
