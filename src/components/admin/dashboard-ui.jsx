@@ -11,34 +11,72 @@ export function StatCard({ label, value, detail, icon: Icon, accent = 'text-blue
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn(
-        'w-full text-left rounded-xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm',
+        'w-full rounded-xl border border-gray-200/80 bg-white p-4 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] sm:p-5',
         className,
-        onClick && 'transition hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600'
+        onClick && 'transition hover:border-gray-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600'
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-gray-600 leading-snug">{label}</p>
+      <div className="flex items-center gap-2.5">
         {Icon && (
-          <span className={cn('hidden sm:inline-flex rounded-lg p-2 shrink-0', accent)}>
+          <span className={cn('inline-flex shrink-0 rounded-lg p-1.5', accent)}>
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         )}
+        <p className="truncate text-sm font-medium text-gray-500">{label}</p>
       </div>
-      <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold tracking-tight tabular-nums text-gray-900">{value}</p>
-      {detail && <p className="mt-1 text-xs sm:text-sm text-gray-500 line-clamp-2">{detail}</p>}
+      <p className="mt-3 font-display text-2xl font-semibold tracking-tight tabular-nums text-gray-900">{value}</p>
+      {detail && <p className="mt-1 truncate text-xs text-gray-500" title={typeof detail === 'string' ? detail : undefined}>{detail}</p>}
     </Comp>
+  );
+}
+
+// White surface with an optional titled header row. Used for tables and overview lists.
+export function Panel({ title, description, action, children, className, bodyClassName }) {
+  return (
+    <section className={cn('overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]', className)}>
+      {(title || action) && (
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-3.5">
+          <div className="min-w-0">
+            {title && <h2 className="text-sm font-semibold text-gray-900">{title}</h2>}
+            {description && <p className="mt-0.5 truncate text-xs text-gray-500">{description}</p>}
+          </div>
+          {action}
+        </div>
+      )}
+      <div className={bodyClassName}>{children}</div>
+    </section>
   );
 }
 
 export function SectionHeader({ title, description, children }) {
   return (
-    <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-        {description && <p className="mt-1 text-sm text-gray-600">{description}</p>}
+    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h2 className="font-display text-base font-semibold text-gray-900">{title}</h2>
+        {description && <p className="mt-0.5 text-sm text-gray-500">{description}</p>}
       </div>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>
+  );
+}
+
+// Square icon-only button for dense card/table actions.
+export function IconButton({ label, icon: Icon, tone = 'default', className, ...props }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={cn(
+        'inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600',
+        tone === 'danger' ? 'hover:bg-red-50 hover:text-red-600' : 'hover:bg-gray-100 hover:text-gray-900',
+        className
+      )}
+      {...props}
+    >
+      <Icon className="h-4 w-4" aria-hidden="true" />
+    </button>
   );
 }
 
@@ -70,8 +108,8 @@ export function SearchInput({ value, onChange, placeholder = 'Search…', label 
 
 export function EmptyState({ icon: Icon, title, description, children }) {
   return (
-    <div className="rounded-xl border-2 border-dashed border-gray-200 px-6 py-14 text-center">
-      {Icon && <Icon className="mx-auto mb-3 h-10 w-10 text-gray-300" aria-hidden="true" />}
+    <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
+      {Icon && <span className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-gray-100"><Icon className="h-5 w-5 text-gray-400" aria-hidden="true" /></span>}
       <h3 className="font-semibold text-gray-900">{title}</h3>
       {description && <p className="mx-auto mt-1 max-w-sm text-sm text-gray-500">{description}</p>}
       {children && <div className="mt-5">{children}</div>}

@@ -96,6 +96,9 @@ export default function Layout({ children, currentPageName }) {
     setIsNewsletterSubmitting(false);
   };
 
+  // The dashboard renders its own app shell (sidebar + top bar).
+  if (currentPageName === 'AdminDashboard') return <>{children}</>;
+
   if (isAdminPage) {
     return (
       <div className="min-h-screen bg-gray-50">

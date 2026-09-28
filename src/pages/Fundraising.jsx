@@ -118,7 +118,7 @@ export default function Fundraising() {
                 return (
                   <Card key={event.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
                     {event.image_url && (
-                      <div className="aspect-video relative">
+                      <div className="aspect-video relative overflow-hidden">
                         <SmartImage src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
                         {isPast && (
                           <span className="absolute top-3 left-3 bg-gray-900/80 text-white text-xs font-semibold px-2.5 py-1 rounded-full">Past event</span>

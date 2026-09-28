@@ -2,9 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Donation, KidReferral, GalleryItem, NewsletterSubscriber, FundraisingEvent } from '@/api/entities';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
@@ -12,20 +10,23 @@ import SmartImage from '@/components/ui/smart-image';
 import {
   DollarSign, Users, Camera, Mail, Download, Eye, Plus, Edit, Trash2, Play, Target,
   Calendar, MapPin, CalendarDays, Heart, ExternalLink, LayoutGrid, ListOrdered, RefreshCw, Star, Paperclip,
+  LayoutDashboard, Images, ArrowRight,
 } from 'lucide-react';
 import { format, isThisMonth } from 'date-fns';
 import GalleryForm from '@/components/admin/GalleryForm';
 import GalleryReorderList from '@/components/admin/GalleryReorderList';
 import ReferralDetailModal from '@/components/admin/ReferralDetailModal';
 import EventForm from '@/components/admin/EventForm';
+import AdminShell from '@/components/admin/AdminShell';
 import { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
 import { formatCurrency } from '@/lib/utils';
 import {
-  StatCard, SectionHeader, SearchInput, EmptyState, StatusBadge, Pagination, usePagination,
+  StatCard, SectionHeader, SearchInput, EmptyState, StatusBadge, Pagination, usePagination, Panel, IconButton,
   downloadCsv, matchesSearch, PAYMENT_TONES, REFERRAL_STATUS_TONES, URGENCY_TONES,
 } from '@/components/admin/dashboard-ui';
 
-const TABS = ['referrals', 'donations', 'events', 'gallery', 'subscribers'];
+const TABS = ['overview', 'referrals', 'donations', 'events', 'gallery', 'subscribers'];
+const URGENCY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const MAX_ROWS = 1000;
 
 function formatDate(value, pattern = 'MMM d, yyyy') {
@@ -38,8 +39,8 @@ const amountOf = (donation) => Number(donation.amount) || 0;
 
 export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'referrals';
-  const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
+  const activeTab = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'overview';
+  const setActiveTab = (tab) => setSearchParams(tab === 'overview' ? {} : { tab }, { replace: true });
 
   const [donations, setDonations] = useState([]);
   const [referrals, setReferrals] = useState([]);
@@ -300,585 +301,730 @@ export default function AdminDashboard() {
     ], filteredSubscribers);
 
   // ---------------------------------------------------------------------------
+  // Layout
+  // ---------------------------------------------------------------------------
 
-  const tabCounts = {
-    referrals: openReferrals.length,
-    donations: donations.length,
-    events: events.length,
-    gallery: gallery.length,
-    subscribers: activeSubscribers.length,
+  const count = (n) => (isLoading ? '·' : n);
+  const navItems = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'referrals', label: 'Referrals', icon: Users, count: count(openReferrals.length) },
+    { id: 'donations', label: 'Donations', icon: Heart, count: count(donations.length) },
+    { id: 'events', label: 'Events', icon: CalendarDays, count: count(events.length) },
+    { id: 'gallery', label: 'Gallery', icon: Images, count: count(gallery.length) },
+    { id: 'subscribers', label: 'Subscribers', icon: Mail, count: count(activeSubscribers.length) },
+  ];
+
+  const featuredCount = gallery.filter((i) => i.is_featured).length;
+  const primary = 'bg-blue-600 hover:bg-blue-700';
+
+  const headers = {
+    overview: {
+      title: 'Overview',
+      description: `${format(now, 'EEEE, MMMM d')} · what needs your attention today`,
+    },
+    referrals: {
+      title: 'Kid referrals',
+      description: `${referrals.length} total · ${pendingReferrals.length} new since last review`,
+      actions: (
+        <Button size="sm" variant="outline" onClick={exportReferrals} disabled={filteredReferrals.length === 0}>
+          <Download className="mr-1.5 h-4 w-4" /> Export
+        </Button>
+      ),
+    },
+    donations: {
+      title: 'Donations',
+      description: `${formatCurrency(raisedAllTime)} raised from ${completedDonations.length} completed donations`,
+      actions: (
+        <Button size="sm" variant="outline" onClick={exportDonations} disabled={filteredDonations.length === 0}>
+          <Download className="mr-1.5 h-4 w-4" /> Export
+        </Button>
+      ),
+    },
+    events: {
+      title: 'Fundraising events',
+      description: 'Active events appear on the Support Us page',
+      actions: (
+        <Button size="sm" onClick={() => { setEditingEvent(null); setShowEventForm(true); }} className={primary}>
+          <Plus className="mr-1.5 h-4 w-4" /> Add event
+        </Button>
+      ),
+    },
+    gallery: {
+      title: 'Gallery',
+      description: `${gallery.length} items · ${featuredCount} featured on the homepage`,
+      actions: (
+        <>
+          <Button size="sm" variant="outline" asChild className="hidden sm:inline-flex">
+            <a href="/Gallery" target="_blank" rel="noreferrer">
+              <ExternalLink className="mr-1.5 h-4 w-4" /> Public gallery
+            </a>
+          </Button>
+          <Button size="sm" onClick={() => { setEditingGalleryItem(null); setShowGalleryForm(true); }} className={primary}>
+            <Plus className="mr-1.5 h-4 w-4" /> Add item
+          </Button>
+        </>
+      ),
+    },
+    subscribers: {
+      title: 'Newsletter subscribers',
+      description: `${activeSubscribers.length} active subscribers`,
+      actions: (
+        <Button size="sm" variant="outline" onClick={exportSubscribers} disabled={filteredSubscribers.length === 0}>
+          <Download className="mr-1.5 h-4 w-4" /> Export
+        </Button>
+      ),
+    },
   };
-  const tabLabels = { referrals: 'Referrals', donations: 'Donations', events: 'Events', gallery: 'Gallery', subscribers: 'Subscribers' };
+  const header = headers[activeTab];
+
+  const refreshButton = (
+    <IconButton
+      label="Refresh data"
+      icon={RefreshCw}
+      onClick={loadDashboardData}
+      disabled={isLoading}
+      className={isLoading ? '[&_svg]:animate-spin' : ''}
+    />
+  );
+
+  const attentionReferrals = [...openReferrals]
+    .sort((a, b) =>
+      (URGENCY_RANK[a.urgency_level] ?? 9) - (URGENCY_RANK[b.urgency_level] ?? 9) ||
+      new Date(b.created_date) - new Date(a.created_date))
+    .slice(0, 5);
+  const recentDonations = completedDonations.slice(0, 6);
+  const featuredItems = gallery.filter((i) => i.is_featured).slice(0, 6);
+
+  const viewAll = (tab, label) => (
+    <button
+      type="button"
+      onClick={() => setActiveTab(tab)}
+      className="inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-800"
+    >
+      {label} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+    </button>
+  );
+
+  const toolbar = 'flex flex-col gap-3 border-b border-gray-100 px-4 py-3 sm:flex-row sm:items-center';
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8 sm:px-8">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="mt-1 text-gray-600">Referrals, donations and site content for Team UP4S</p>
-          </div>
-          <Button variant="outline" onClick={loadDashboardData} disabled={isLoading} className="self-start sm:self-auto">
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+    <AdminShell
+      items={navItems}
+      active={activeTab}
+      onSelect={setActiveTab}
+      title={header.title}
+      description={header.description}
+      actions={<>{header.actions}{refreshButton}</>}
+    >
+      {loadError && (
+        <div role="alert" className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Couldn&apos;t load dashboard data: {loadError}
         </div>
+      )}
 
-        {loadError && (
-          <div role="alert" className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            Couldn&apos;t load dashboard data: {loadError}
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
-          <StatCard
-            label="Raised, all time"
-            value={isLoading ? '—' : formatCurrency(raisedAllTime)}
-            detail={`${completedDonations.length} completed donations`}
-            icon={DollarSign}
-            accent="text-green-600 bg-green-50"
-            onClick={() => { setDonationStatus('completed'); setActiveTab('donations'); }}
-          />
-          <StatCard
-            label="This month"
-            value={isLoading ? '—' : formatCurrency(raisedThisMonth)}
-            detail={`${thisMonth.length} donation${thisMonth.length === 1 ? '' : 's'} in ${format(now, 'MMMM')}`}
-            icon={Heart}
-            accent="text-red-600 bg-red-50"
-          />
-          <StatCard
-            label="To review"
-            value={isLoading ? '—' : openReferrals.length}
-            detail={`${pendingReferrals.length} new, ${openReferrals.length - pendingReferrals.length} in review`}
-            icon={Users}
-            accent="text-blue-600 bg-blue-50"
-            onClick={() => { setReferralStatus('open'); setActiveTab('referrals'); }}
-          />
-          <StatCard
-            label="Upcoming events"
-            value={isLoading ? '—' : upcomingEvents.length}
-            detail={upcomingEvents[0] ? `Next: ${upcomingEvents[0].title} · ${formatDate(upcomingEvents[0].event_date, 'MMM d')}` : 'None scheduled'}
-            icon={CalendarDays}
-            accent="text-purple-600 bg-purple-50"
-            onClick={() => setActiveTab('events')}
-          />
-          <StatCard
-            label="Subscribers"
-            value={isLoading ? '—' : activeSubscribers.length}
-            detail={subscribers.length > activeSubscribers.length ? `${subscribers.length - activeSubscribers.length} unsubscribed` : 'All active'}
-            icon={Mail}
-            accent="text-orange-600 bg-orange-50"
-            onClick={() => setActiveTab('subscribers')}
-            className="col-span-2 lg:col-span-1"
-          />
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-            <TabsList className="h-auto min-w-max bg-white p-1 shadow-sm ring-1 ring-gray-200">
-              {TABS.map((tab) => (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                  className="gap-2 px-4 py-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
-                >
-                  {tabLabels[tab]}
-                  <span className="rounded-full bg-black/10 px-1.5 text-xs tabular-nums">{isLoading ? '·' : tabCounts[tab]}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
+      {/* Overview */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+            <StatCard
+              label="Raised, all time"
+              value={isLoading ? '—' : formatCurrency(raisedAllTime)}
+              detail={`${completedDonations.length} completed donations`}
+              icon={DollarSign}
+              accent="text-green-700 bg-green-50"
+              onClick={() => { setDonationStatus('completed'); setActiveTab('donations'); }}
+            />
+            <StatCard
+              label="This month"
+              value={isLoading ? '—' : formatCurrency(raisedThisMonth)}
+              detail={`${thisMonth.length} donation${thisMonth.length === 1 ? '' : 's'} in ${format(now, 'MMMM')}`}
+              icon={Heart}
+              accent="text-red-600 bg-red-50"
+            />
+            <StatCard
+              label="Referrals to review"
+              value={isLoading ? '—' : openReferrals.length}
+              detail={`${pendingReferrals.length} new, ${openReferrals.length - pendingReferrals.length} in review`}
+              icon={Users}
+              accent="text-blue-700 bg-blue-50"
+              onClick={() => { setReferralStatus('open'); setActiveTab('referrals'); }}
+            />
+            <StatCard
+              label="Subscribers"
+              value={isLoading ? '—' : activeSubscribers.length}
+              detail={subscribers.length > activeSubscribers.length ? `${subscribers.length - activeSubscribers.length} unsubscribed` : 'All active'}
+              icon={Mail}
+              accent="text-orange-600 bg-orange-50"
+              onClick={() => setActiveTab('subscribers')}
+            />
           </div>
 
-          {/* Referrals */}
-          <TabsContent value="referrals">
-            <SectionHeader
-              title="Kid referrals"
-              description={`${referrals.length} total · ${pendingReferrals.length} new since last review`}
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Panel
+              className="lg:col-span-2"
+              title="Needs attention"
+              description="Open referrals, most urgent first"
+              action={openReferrals.length > 0 && viewAll('referrals', 'All referrals')}
             >
-              <Button variant="outline" onClick={exportReferrals} disabled={filteredReferrals.length === 0}>
-                <Download className="mr-2 h-4 w-4" /> Export CSV
-              </Button>
-            </SectionHeader>
-
-            <Card className="overflow-hidden">
-              <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center">
-                <SearchInput
-                  value={referralSearch}
-                  onChange={setReferralSearch}
-                  placeholder="Search child, guardian, email or wish"
-                  label="Search referrals"
-                  className="sm:max-w-sm sm:flex-1"
-                />
-                <div className="flex gap-3">
-                  <Select value={referralStatus} onValueChange={setReferralStatus}>
-                    <SelectTrigger className="w-40" aria-label="Filter by status"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="open">Needs review</SelectItem>
-                      <SelectItem value="all">All statuses</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="reviewing">Reviewing</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="declined">Declined</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={referralUrgency} onValueChange={setReferralUrgency}>
-                    <SelectTrigger className="w-36" aria-label="Filter by urgency"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any urgency</SelectItem>
-                      <SelectItem value="critical">Critical</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {filteredReferrals.length === 0 ? (
-                <div className="p-6">
-                  <EmptyState
-                    icon={Users}
-                    title={referrals.length === 0 ? 'No referrals yet' : 'No referrals match'}
-                    description={referrals.length === 0
-                      ? 'Referrals submitted through the Refer a Kid form will appear here.'
-                      : 'Try a different search or filter.'}
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50/80">
-                          <TableHead>Child</TableHead>
-                          <TableHead>Guardian</TableHead>
-                          <TableHead className="min-w-[16rem]">Wish</TableHead>
-                          <TableHead>Urgency</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Submitted</TableHead>
-                          <TableHead className="text-right"><span className="sr-only">Actions</span></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {referralPages.pageItems.map((referral) => (
-                          <TableRow
-                            key={referral.id}
-                            className="cursor-pointer hover:bg-blue-50/40"
-                            onClick={() => setSelectedReferral(referral)}
-                          >
-                            <TableCell>
-                              <p className="font-medium text-gray-900">{referral.child_name}</p>
-                              {referral.child_age != null && <p className="text-sm text-gray-500">Age {referral.child_age}</p>}
-                            </TableCell>
-                            <TableCell>
-                              <p className="font-medium text-gray-900">{referral.guardian_name}</p>
-                              <p className="text-sm text-gray-500">{referral.guardian_email}</p>
-                              {referral.guardian_phone && <p className="text-sm text-gray-500">{referral.guardian_phone}</p>}
-                            </TableCell>
-                            <TableCell>
-                              <p className="max-w-md text-sm text-gray-700 line-clamp-2">{referral.wish_description}</p>
-                              {referral.uploaded_files?.length > 0 && (
-                                <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
-                                  <Paperclip className="h-3 w-3" aria-hidden="true" />
-                                  {referral.uploaded_files.length} attachment{referral.uploaded_files.length === 1 ? '' : 's'}
-                                </p>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <StatusBadge tone={URGENCY_TONES[referral.urgency_level]}>{referral.urgency_level}</StatusBadge>
-                            </TableCell>
-                            <TableCell>
-                              <StatusBadge tone={REFERRAL_STATUS_TONES[referral.status]}>{referral.status}</StatusBadge>
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-sm text-gray-600">
-                              {formatDate(referral.created_date)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => { e.stopPropagation(); setSelectedReferral(referral); }}
-                                aria-label={`Open referral for ${referral.child_name}`}
-                              >
-                                <Eye className="mr-1 h-4 w-4" /> Open
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  <Pagination {...referralPages} />
-                </>
-              )}
-            </Card>
-          </TabsContent>
-
-          {/* Donations */}
-          <TabsContent value="donations">
-            <SectionHeader
-              title="Donations"
-              description={`${formatCurrency(raisedAllTime)} raised from ${completedDonations.length} completed donations`}
-            >
-              <Button variant="outline" onClick={exportDonations} disabled={filteredDonations.length === 0}>
-                <Download className="mr-2 h-4 w-4" /> Export CSV
-              </Button>
-            </SectionHeader>
-
-            <Card className="overflow-hidden">
-              <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center">
-                <SearchInput
-                  value={donationSearch}
-                  onChange={setDonationSearch}
-                  placeholder="Search donor, email or event"
-                  label="Search donations"
-                  className="sm:max-w-sm sm:flex-1"
-                />
-                <Select value={donationStatus} onValueChange={setDonationStatus}>
-                  <SelectTrigger className="w-40" aria-label="Filter by payment status"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                    <SelectItem value="refunded">Refunded</SelectItem>
-                  </SelectContent>
-                </Select>
-                {donationStatus === 'pending' && (
-                  <p className="text-xs text-gray-500 sm:ml-auto sm:max-w-xs">
-                    Pending = checkout started but Stripe hasn&apos;t confirmed payment.
-                  </p>
-                )}
-              </div>
-
-              {filteredDonations.length === 0 ? (
-                <div className="p-6">
-                  <EmptyState
-                    icon={DollarSign}
-                    title={donations.length === 0 ? 'No donations yet' : 'No donations match'}
-                    description={donations.length === 0 ? 'Donations made through the site will appear here.' : 'Try a different search or filter.'}
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50/80">
-                          <TableHead className="min-w-[14rem]">Donor</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                          <TableHead className="min-w-[12rem]">For</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {donationPages.pageItems.map((donation) => (
-                          <TableRow key={donation.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium text-gray-900">{donation.donor_name || '—'}</p>
-                                {donation.is_anonymous && <StatusBadge tone="gray" title="Asked not to be named publicly">Anonymous</StatusBadge>}
-                              </div>
-                              <p className="text-sm text-gray-500">{donation.donor_email}</p>
-                              {donation.dedication_message && (
-                                <p className="mt-0.5 text-xs italic text-gray-500">In honor of {donation.dedication_message}</p>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <p className="font-semibold tabular-nums text-gray-900">{formatCurrency(amountOf(donation))}</p>
-                              {donation.donation_type === 'monthly' && <p className="text-xs text-gray-500">monthly</p>}
-                            </TableCell>
-                            <TableCell className="text-sm text-gray-700">
-                              {eventTitles[donation.event_id] || <span className="text-gray-500">General fund</span>}
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-sm text-gray-600">{formatDate(donation.created_date)}</TableCell>
-                            <TableCell>
-                              <StatusBadge tone={PAYMENT_TONES[donation.payment_status]}>{donation.payment_status}</StatusBadge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  <Pagination {...donationPages} />
-                </>
-              )}
-            </Card>
-          </TabsContent>
-
-          {/* Events */}
-          <TabsContent value="events">
-            <SectionHeader title="Fundraising events" description="Events appear on the Support Us page.">
-              <Button onClick={() => { setEditingEvent(null); setShowEventForm(true); }} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="mr-2 h-4 w-4" /> Add event
-              </Button>
-            </SectionHeader>
-
-            {showEventForm && (
-              <EventForm
-                event={editingEvent}
-                onSubmit={handleEventSubmit}
-                onCancel={() => { setShowEventForm(false); setEditingEvent(null); }}
-                isSubmitting={isSubmittingEvent}
-              />
-            )}
-
-            {events.length === 0 && !showEventForm ? (
-              <EmptyState icon={Target} title="No events yet" description="Add a fundraising event to show it on the Support Us page.">
-                <Button onClick={() => setShowEventForm(true)}><Plus className="mr-2 h-4 w-4" /> Add your first event</Button>
-              </EmptyState>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {events.map((event) => {
-                  const goal = Number(event.fundraising_goal) || 0;
-                  const raised = Number(event.amount_raised) || 0;
-                  const pct = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
-                  const isPast = event.event_date && new Date(event.event_date) < now;
-                  const donationCount = completedDonations.filter((d) => d.event_id === event.id).length;
-                  return (
-                    <Card key={event.id} className="flex flex-col overflow-hidden">
-                      <div className="relative aspect-video">
-                        <SmartImage src={event.image_url} alt="" className="h-full w-full object-cover" />
-                        <div className="absolute left-3 top-3 flex gap-1.5">
-                          <StatusBadge tone={event.is_active ? 'green' : 'gray'}>{event.is_active ? 'Active' : 'Hidden'}</StatusBadge>
-                          {isPast && <StatusBadge tone="gray">Past</StatusBadge>}
-                        </div>
-                      </div>
-                      <div className="flex flex-1 flex-col p-5">
-                        <h3 className="font-semibold text-gray-900">{event.title}</h3>
-                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
-                          <span className="flex items-center gap-1"><Calendar className="h-4 w-4" aria-hidden="true" /> {formatDate(event.event_date)}</span>
-                          {event.location && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" aria-hidden="true" /> {event.location}</span>}
-                        </div>
-                        <div className="mt-4 flex-1">
-                          <div className="mb-1 flex items-baseline justify-between text-sm">
-                            <span className="font-semibold text-gray-900">{formatCurrency(raised)}</span>
-                            <span className="text-gray-500">{goal > 0 ? `of ${formatCurrency(goal)}` : 'No goal set'}</span>
-                          </div>
-                          <Progress value={pct} className="h-2" />
-                          <p className="mt-1.5 text-xs text-gray-500">
-                            {goal > 0 && `${pct.toFixed(0)}% · `}{donationCount} online donation{donationCount === 1 ? '' : 's'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex justify-end gap-2 border-t border-gray-100 p-3">
-                        <Button variant="outline" size="sm" onClick={() => handleEditEvent(event)}>
-                          <Edit className="mr-1 h-4 w-4" /> Edit
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleDeleteEvent(event)}>
-                          <Trash2 className="mr-1 h-4 w-4" /> Delete
-                        </Button>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Gallery */}
-          <TabsContent value="gallery">
-            <SectionHeader
-              title="Gallery"
-              description={`${gallery.length} items · ${gallery.filter((i) => i.is_featured).length} featured on the homepage`}
-            >
-              <div className="inline-flex rounded-md border border-gray-300 bg-white p-0.5" role="group" aria-label="View">
-                {[['grid', 'Grid', LayoutGrid], ['list', 'Reorder', ListOrdered]].map(([mode, label, Icon]) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    aria-pressed={galleryViewMode === mode}
-                    onClick={() => setGalleryViewMode(mode)}
-                    className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium ${
-                      galleryViewMode === mode ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" aria-hidden="true" /> {label}
-                  </button>
-                ))}
-              </div>
-              <Button variant="outline" asChild>
-                <a href="/Gallery" target="_blank" rel="noreferrer">
-                  <ExternalLink className="mr-2 h-4 w-4" /> Public gallery
-                </a>
-              </Button>
-              <Button onClick={() => { setEditingGalleryItem(null); setShowGalleryForm(true); }} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="mr-2 h-4 w-4" /> Add item
-              </Button>
-            </SectionHeader>
-
-            {showGalleryForm && (
-              <GalleryForm
-                item={editingGalleryItem}
-                onSubmit={handleGallerySubmit}
-                onCancel={() => { setShowGalleryForm(false); setEditingGalleryItem(null); }}
-              />
-            )}
-
-            {isLoading ? (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {Array(8).fill(0).map((_, i) => (
-                  <div key={i} className="animate-pulse rounded-xl bg-white p-3 shadow-sm">
-                    <div className="aspect-video rounded-lg bg-gray-200" />
-                    <div className="mt-3 h-4 rounded bg-gray-200" />
-                    <div className="mt-2 h-3 w-2/3 rounded bg-gray-200" />
-                  </div>
-                ))}
-              </div>
-            ) : gallery.length === 0 && !showGalleryForm ? (
-              <EmptyState icon={Camera} title="No gallery items yet" description="Add photos or videos to show them in the public gallery.">
-                <Button onClick={() => setShowGalleryForm(true)}><Plus className="mr-2 h-4 w-4" /> Add your first item</Button>
-              </EmptyState>
-            ) : galleryViewMode === 'list' ? (
-              <div>
-                <p className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-                  Drag items to change their order in the public gallery. Items at the top appear first.
+              {attentionReferrals.length === 0 ? (
+                <p className="px-5 py-10 text-center text-sm text-gray-500">
+                  {isLoading ? 'Loading…' : 'You’re all caught up. New referrals will show up here.'}
                 </p>
-                <GalleryReorderList
-                  items={gallery}
-                  onReorder={handleGalleryReorder}
-                  onEdit={handleEditGalleryItem}
-                  onDelete={handleDeleteGalleryItem}
-                  getDisplayImage={getDisplayImage}
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {gallery.map((item) => (
-                  <Card key={item.id} className="group flex flex-col overflow-hidden">
-                    <div className="relative aspect-video">
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {attentionReferrals.map((referral) => (
+                    <li key={referral.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedReferral(referral)}
+                        className="flex w-full items-center gap-4 px-5 py-3.5 text-left transition-colors hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:outline-none"
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
+                          {referral.child_name?.[0]?.toUpperCase() ?? '?'}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-gray-900">
+                            {referral.child_name}{referral.child_age != null && <span className="font-normal text-gray-500">, {referral.child_age}</span>}
+                          </span>
+                          <span className="block truncate text-sm text-gray-500">{referral.wish_description}</span>
+                        </span>
+                        <span className="hidden shrink-0 sm:block">
+                          <StatusBadge tone={URGENCY_TONES[referral.urgency_level]}>{referral.urgency_level}</StatusBadge>
+                        </span>
+                        <span className="w-16 shrink-0 text-right text-xs text-gray-500">{formatDate(referral.created_date, 'MMM d')}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+
+            <Panel
+              title="Upcoming events"
+              action={viewAll('events', 'Manage')}
+            >
+              {upcomingEvents.length === 0 ? (
+                <p className="px-5 py-10 text-center text-sm text-gray-500">{isLoading ? 'Loading…' : 'No upcoming events scheduled.'}</p>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {upcomingEvents.slice(0, 4).map((event) => {
+                    const goal = Number(event.fundraising_goal) || 0;
+                    const raised = Number(event.amount_raised) || 0;
+                    return (
+                      <li key={event.id} className="flex items-center gap-3 px-5 py-3.5">
+                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                          <SmartImage src={event.image_url} alt="" className="absolute inset-0 h-full w-full object-cover [&_svg]:h-5 [&_svg]:w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-gray-900">{event.title}</p>
+                          <p className="text-xs text-gray-500">{formatDate(event.event_date, 'EEE, MMM d')}</p>
+                          {goal > 0 && (
+                            <div className="mt-1.5 flex items-center gap-2">
+                              <Progress value={Math.min((raised / goal) * 100, 100)} className="h-1.5 flex-1" />
+                              <span className="text-[11px] tabular-nums text-gray-500">{Math.min(Math.round((raised / goal) * 100), 100)}%</span>
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Panel>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Panel
+              className="lg:col-span-2"
+              title="Recent donations"
+              action={donations.length > 0 && viewAll('donations', 'All donations')}
+            >
+              {recentDonations.length === 0 ? (
+                <p className="px-5 py-10 text-center text-sm text-gray-500">{isLoading ? 'Loading…' : 'No completed donations yet.'}</p>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {recentDonations.map((donation) => (
+                    <li key={donation.id} className="flex items-center gap-4 px-5 py-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">{donation.donor_name || 'Anonymous donor'}</p>
+                        <p className="truncate text-xs text-gray-500">
+                          {eventTitles[donation.event_id] || 'General fund'}{donation.donation_type === 'monthly' ? ' · monthly' : ''}
+                        </p>
+                      </div>
+                      <span className="hidden text-xs text-gray-500 sm:block">{formatDate(donation.created_date, 'MMM d')}</span>
+                      <span className="w-20 text-right text-sm font-semibold tabular-nums text-gray-900">{formatCurrency(amountOf(donation))}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+
+            <Panel
+              title="On the homepage"
+              description={`${featuredCount} featured gallery item${featuredCount === 1 ? '' : 's'}`}
+              action={viewAll('gallery', 'Edit')}
+            >
+              {featuredItems.length === 0 ? (
+                <p className="px-5 py-10 text-center text-sm text-gray-500">
+                  {isLoading ? 'Loading…' : 'Star items in the Gallery to feature them on the homepage.'}
+                </p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2 p-4">
+                  {featuredItems.map((item) => (
+                    <div key={item.id} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100" title={item.title}>
                       <SmartImage
                         src={getDisplayImage(item)}
                         fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
-                        alt=""
+                        alt={item.title}
                         placeholderIcon={item.media_type === 'video' ? 'video' : 'image'}
-                        className="h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover [&_svg]:h-5 [&_svg]:w-5"
                       />
-                      {item.media_type === 'video' && (
-                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/70">
-                            <Play className="ml-0.5 h-5 w-5 text-white" aria-hidden="true" />
-                          </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+          </div>
+        </div>
+      )}
+
+      {/* Referrals */}
+      {activeTab === 'referrals' && (
+        <Panel>
+          <div className={toolbar}>
+            <SearchInput
+              value={referralSearch}
+              onChange={setReferralSearch}
+              placeholder="Search child, guardian, email or wish"
+              label="Search referrals"
+              className="sm:max-w-sm sm:flex-1"
+            />
+            <div className="flex gap-2">
+              <Select value={referralStatus} onValueChange={setReferralStatus}>
+                <SelectTrigger className="h-9 w-40" aria-label="Filter by status"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Needs review</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="reviewing">Reviewing</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="declined">Declined</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={referralUrgency} onValueChange={setReferralUrgency}>
+                <SelectTrigger className="h-9 w-36" aria-label="Filter by urgency"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any urgency</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {filteredReferrals.length === 0 ? (
+            <div className="p-6">
+              <EmptyState
+                icon={Users}
+                title={referrals.length === 0 ? 'No referrals yet' : 'No referrals match'}
+                description={referrals.length === 0
+                  ? 'Referrals submitted through the Refer a Kid form will appear here.'
+                  : 'Try a different search or filter.'}
+              />
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/70 hover:bg-gray-50/70">
+                    <TableHead>Child</TableHead>
+                    <TableHead>Guardian</TableHead>
+                    <TableHead className="min-w-[16rem]">Wish</TableHead>
+                    <TableHead>Urgency</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Submitted</TableHead>
+                    <TableHead className="text-right"><span className="sr-only">Actions</span></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {referralPages.pageItems.map((referral) => (
+                    <TableRow
+                      key={referral.id}
+                      className="cursor-pointer"
+                      onClick={() => setSelectedReferral(referral)}
+                    >
+                      <TableCell>
+                        <p className="font-medium text-gray-900">{referral.child_name}</p>
+                        {referral.child_age != null && <p className="text-xs text-gray-500">Age {referral.child_age}</p>}
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-medium text-gray-900">{referral.guardian_name}</p>
+                        <p className="text-xs text-gray-500">{referral.guardian_email}</p>
+                        {referral.guardian_phone && <p className="text-xs text-gray-500">{referral.guardian_phone}</p>}
+                      </TableCell>
+                      <TableCell>
+                        <p className="max-w-md text-gray-700 line-clamp-2">{referral.wish_description}</p>
+                        {referral.uploaded_files?.length > 0 && (
+                          <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                            <Paperclip className="h-3 w-3" aria-hidden="true" />
+                            {referral.uploaded_files.length} attachment{referral.uploaded_files.length === 1 ? '' : 's'}
+                          </p>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge tone={URGENCY_TONES[referral.urgency_level]}>{referral.urgency_level}</StatusBadge>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge tone={REFERRAL_STATUS_TONES[referral.status]}>{referral.status}</StatusBadge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-gray-600">
+                        {formatDate(referral.created_date)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <IconButton
+                          label={`Open referral for ${referral.child_name}`}
+                          icon={Eye}
+                          onClick={(e) => { e.stopPropagation(); setSelectedReferral(referral); }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination {...referralPages} />
+            </>
+          )}
+        </Panel>
+      )}
+
+      {/* Donations */}
+      {activeTab === 'donations' && (
+        <Panel>
+          <div className={toolbar}>
+            <SearchInput
+              value={donationSearch}
+              onChange={setDonationSearch}
+              placeholder="Search donor, email or event"
+              label="Search donations"
+              className="sm:max-w-sm sm:flex-1"
+            />
+            <Select value={donationStatus} onValueChange={setDonationStatus}>
+              <SelectTrigger className="h-9 w-40" aria-label="Filter by payment status"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="refunded">Refunded</SelectItem>
+              </SelectContent>
+            </Select>
+            {donationStatus === 'pending' && (
+              <p className="text-xs text-gray-500 sm:ml-auto sm:max-w-xs">
+                Pending = checkout started but Stripe hasn&apos;t confirmed payment.
+              </p>
+            )}
+          </div>
+
+          {filteredDonations.length === 0 ? (
+            <div className="p-6">
+              <EmptyState
+                icon={DollarSign}
+                title={donations.length === 0 ? 'No donations yet' : 'No donations match'}
+                description={donations.length === 0 ? 'Donations made through the site will appear here.' : 'Try a different search or filter.'}
+              />
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/70 hover:bg-gray-50/70">
+                    <TableHead className="min-w-[14rem]">Donor</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="min-w-[12rem]">For</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {donationPages.pageItems.map((donation) => (
+                    <TableRow key={donation.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900">{donation.donor_name || '—'}</p>
+                          {donation.is_anonymous && <StatusBadge tone="gray" title="Asked not to be named publicly">Anonymous</StatusBadge>}
                         </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleFeatured(item)}
-                        aria-pressed={item.is_featured}
-                        title={item.is_featured ? 'Featured on the homepage (click to remove)' : 'Feature on the homepage'}
-                        className={`absolute right-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold shadow transition ${
-                          item.is_featured ? 'bg-yellow-400 text-gray-900' : 'bg-white/90 text-gray-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
-                        }`}
-                      >
-                        <Star className={`h-3.5 w-3.5 ${item.is_featured ? 'fill-current' : ''}`} aria-hidden="true" />
-                        {item.is_featured ? 'Featured' : 'Feature'}
-                      </button>
+                        <p className="text-xs text-gray-500">{donation.donor_email}</p>
+                        {donation.dedication_message && (
+                          <p className="mt-0.5 text-xs italic text-gray-500">In honor of {donation.dedication_message}</p>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <p className="font-semibold tabular-nums text-gray-900">{formatCurrency(amountOf(donation))}</p>
+                        {donation.donation_type === 'monthly' && <p className="text-xs text-gray-500">monthly</p>}
+                      </TableCell>
+                      <TableCell className="text-gray-700">
+                        {eventTitles[donation.event_id] || <span className="text-gray-500">General fund</span>}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-gray-600">{formatDate(donation.created_date)}</TableCell>
+                      <TableCell>
+                        <StatusBadge tone={PAYMENT_TONES[donation.payment_status]}>{donation.payment_status}</StatusBadge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination {...donationPages} />
+            </>
+          )}
+        </Panel>
+      )}
+
+      {/* Events */}
+      {activeTab === 'events' && (
+        <>
+          {showEventForm && (
+            <EventForm
+              event={editingEvent}
+              onSubmit={handleEventSubmit}
+              onCancel={() => { setShowEventForm(false); setEditingEvent(null); }}
+              isSubmitting={isSubmittingEvent}
+            />
+          )}
+
+          {events.length === 0 && !showEventForm ? (
+            <EmptyState icon={Target} title="No events yet" description="Add a fundraising event to show it on the Support Us page.">
+              <Button size="sm" onClick={() => setShowEventForm(true)} className={primary}><Plus className="mr-1.5 h-4 w-4" /> Add your first event</Button>
+            </EmptyState>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {events.map((event) => {
+                const goal = Number(event.fundraising_goal) || 0;
+                const raised = Number(event.amount_raised) || 0;
+                const pct = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
+                const isPast = event.event_date && new Date(event.event_date) < now;
+                const donationCount = completedDonations.filter((d) => d.event_id === event.id).length;
+                return (
+                  <article key={event.id} className="flex flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                    <div className="relative aspect-[16/9] overflow-hidden bg-gray-100">
+                      <SmartImage src={event.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                      <div className="absolute left-3 top-3 flex gap-1.5">
+                        <StatusBadge tone={event.is_active ? 'green' : 'gray'}>{event.is_active ? 'Active' : 'Hidden'}</StatusBadge>
+                        {isPast && <StatusBadge tone="gray">Past</StatusBadge>}
+                      </div>
                     </div>
                     <div className="flex flex-1 flex-col p-4">
-                      <div className="mb-2 flex items-center gap-1.5">
-                        <StatusBadge tone="blue">{item.category?.replace(/-/g, ' ') || 'uncategorized'}</StatusBadge>
-                        <StatusBadge tone="gray">{item.media_type}</StatusBadge>
+                      <h3 className="truncate font-semibold text-gray-900" title={event.title}>{event.title}</h3>
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
+                        <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(event.event_date)}</span>
+                        {event.location && <span className="flex min-w-0 items-center gap-1"><MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> <span className="truncate">{event.location}</span></span>}
                       </div>
-                      <h3 className="font-medium text-gray-900 line-clamp-2">{item.title}</h3>
-                      {item.child_name && (
-                        <p className="mt-1 text-sm text-gray-500">By {item.child_name}{item.child_age ? `, age ${item.child_age}` : ''}</p>
-                      )}
-                      <p className="mt-auto pt-3 text-xs text-gray-400">Added {formatDate(item.created_date)}</p>
+                      <div className="mt-4">
+                        <div className="mb-1.5 flex items-baseline justify-between text-sm">
+                          <span className="font-semibold tabular-nums text-gray-900">{formatCurrency(raised)}</span>
+                          <span className="text-xs text-gray-500">{goal > 0 ? `of ${formatCurrency(goal)}` : 'No goal set'}</span>
+                        </div>
+                        <Progress value={pct} className="h-1.5" />
+                      </div>
                     </div>
-                    <div className="flex justify-end gap-2 border-t border-gray-100 p-3">
-                      <Button variant="outline" size="sm" onClick={() => handleEditGalleryItem(item)}>
-                        <Edit className="mr-1 h-4 w-4" /> Edit
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleDeleteGalleryItem(item)}>
-                        <Trash2 className="mr-1 h-4 w-4" /> Delete
-                      </Button>
+                    <div className="flex items-center justify-between border-t border-gray-100 py-2 pl-4 pr-2">
+                      <p className="text-xs text-gray-500">
+                        {goal > 0 && `${pct.toFixed(0)}% · `}{donationCount} online donation{donationCount === 1 ? '' : 's'}
+                      </p>
+                      <div className="flex">
+                        <IconButton label={`Edit ${event.title}`} icon={Edit} onClick={() => handleEditEvent(event)} />
+                        <IconButton label={`Delete ${event.title}`} icon={Trash2} tone="danger" onClick={() => handleDeleteEvent(event)} />
+                      </div>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
 
-          {/* Subscribers */}
-          <TabsContent value="subscribers">
-            <SectionHeader title="Newsletter subscribers" description={`${activeSubscribers.length} active subscribers`}>
-              <Button variant="outline" onClick={exportSubscribers} disabled={filteredSubscribers.length === 0}>
-                <Download className="mr-2 h-4 w-4" /> Export CSV
-              </Button>
-            </SectionHeader>
+      {/* Gallery */}
+      {activeTab === 'gallery' && (
+        <>
+          {showGalleryForm && (
+            <GalleryForm
+              item={editingGalleryItem}
+              onSubmit={handleGallerySubmit}
+              onCancel={() => { setShowGalleryForm(false); setEditingGalleryItem(null); }}
+            />
+          )}
 
-            <Card className="overflow-hidden">
-              <div className="border-b border-gray-100 p-4">
-                <SearchInput
-                  value={subscriberSearch}
-                  onChange={setSubscriberSearch}
-                  placeholder="Search email or name"
-                  label="Search subscribers"
-                  className="sm:max-w-sm"
-                />
-              </div>
-              {filteredSubscribers.length === 0 ? (
-                <div className="p-6">
-                  <EmptyState
-                    icon={Mail}
-                    title={subscribers.length === 0 ? 'No subscribers yet' : 'No subscribers match'}
-                    description={subscribers.length === 0 ? 'People who sign up in the site footer will appear here.' : 'Try a different search.'}
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50/80">
-                          <TableHead>Email</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Source</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Subscribed</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {subscriberPages.pageItems.map((subscriber) => (
-                          <TableRow key={subscriber.id}>
-                            <TableCell className="font-medium text-gray-900">{subscriber.email}</TableCell>
-                            <TableCell className="text-gray-700">{subscriber.first_name || '—'}</TableCell>
-                            <TableCell className="text-sm capitalize text-gray-600">{subscriber.subscription_source?.replace(/-/g, ' ') || '—'}</TableCell>
-                            <TableCell>
-                              <StatusBadge tone={subscriber.is_active ? 'green' : 'gray'}>{subscriber.is_active ? 'Active' : 'Unsubscribed'}</StatusBadge>
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-sm text-gray-600">{formatDate(subscriber.created_date)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+          <SectionHeader
+            title={galleryViewMode === 'list' ? 'Display order' : 'All items'}
+            description={galleryViewMode === 'list'
+              ? 'Drag items to change their order in the public gallery. Items at the top appear first.'
+              : 'Star an item to feature it on the homepage.'}
+          >
+            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5 shadow-sm" role="group" aria-label="View">
+              {[['grid', 'Grid', LayoutGrid], ['list', 'Reorder', ListOrdered]].map(([mode, label, Icon]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={galleryViewMode === mode}
+                  onClick={() => setGalleryViewMode(mode)}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    galleryViewMode === mode ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" /> {label}
+                </button>
+              ))}
+            </div>
+          </SectionHeader>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              {Array(10).fill(0).map((_, i) => (
+                <div key={i} className="animate-pulse overflow-hidden rounded-xl border border-gray-200/80 bg-white">
+                  <div className="aspect-[4/3] bg-gray-100" />
+                  <div className="space-y-2 p-3">
+                    <div className="h-3.5 w-3/4 rounded bg-gray-100" />
+                    <div className="h-3 w-1/2 rounded bg-gray-100" />
                   </div>
-                  <Pagination {...subscriberPages} />
-                </>
-              )}
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </div>
+              ))}
+            </div>
+          ) : gallery.length === 0 && !showGalleryForm ? (
+            <EmptyState icon={Camera} title="No gallery items yet" description="Add photos or videos to show them in the public gallery.">
+              <Button size="sm" onClick={() => setShowGalleryForm(true)} className={primary}><Plus className="mr-1.5 h-4 w-4" /> Add your first item</Button>
+            </EmptyState>
+          ) : galleryViewMode === 'list' ? (
+            <GalleryReorderList
+              items={gallery}
+              onReorder={handleGalleryReorder}
+              onEdit={handleEditGalleryItem}
+              onDelete={handleDeleteGalleryItem}
+              getDisplayImage={getDisplayImage}
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              {gallery.map((item) => (
+                <article
+                  key={item.id}
+                  className="group overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:shadow-md"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                    <SmartImage
+                      src={getDisplayImage(item)}
+                      fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
+                      alt=""
+                      placeholderIcon={item.media_type === 'video' ? 'video' : 'image'}
+                      className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                    />
+                    {item.media_type === 'video' && (
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm">
+                          <Play className="ml-0.5 h-4 w-4 text-white" aria-hidden="true" />
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFeatured(item)}
+                      aria-pressed={item.is_featured}
+                      aria-label={item.is_featured ? `Remove ${item.title} from the homepage` : `Feature ${item.title} on the homepage`}
+                      title={item.is_featured ? 'Featured on the homepage (click to remove)' : 'Feature on the homepage'}
+                      className={`absolute right-2 top-2 inline-flex h-7 items-center gap-1 rounded-full px-2 text-xs font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
+                        item.is_featured
+                          ? 'bg-yellow-400 text-gray-900'
+                          : 'bg-white/90 text-gray-600 opacity-0 backdrop-blur-sm hover:text-gray-900 group-hover:opacity-100 focus-visible:opacity-100'
+                      }`}
+                    >
+                      <Star className={`h-3.5 w-3.5 ${item.is_featured ? 'fill-current' : ''}`} aria-hidden="true" />
+                      {item.is_featured ? 'Featured' : 'Feature'}
+                    </button>
+                  </div>
+                  <div className="flex items-start gap-1 py-2.5 pl-3 pr-1.5">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-sm font-medium text-gray-900" title={item.title}>{item.title}</h3>
+                      <p className="mt-0.5 truncate text-xs capitalize text-gray-500">
+                        {[item.category?.replace(/-/g, ' ') || 'uncategorized', item.media_type, item.child_name].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                    <IconButton label={`Edit ${item.title}`} icon={Edit} onClick={() => handleEditGalleryItem(item)} />
+                    <IconButton label={`Delete ${item.title}`} icon={Trash2} tone="danger" onClick={() => handleDeleteGalleryItem(item)} />
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
-        {/* Keyed per referral: the modal copies the referral into form state on mount,
-            so reusing one instance would show (and save) stale values. */}
-        <ReferralDetailModal
-          key={selectedReferral?.id ?? 'none'}
-          referral={selectedReferral}
-          isOpen={!!selectedReferral}
-          onClose={() => setSelectedReferral(null)}
-          onUpdate={() => {
-            setSelectedReferral(null);
-            loadDashboardData();
-            toast.success('Referral updated');
-          }}
-        />
-      </div>
-    </div>
+      {/* Subscribers */}
+      {activeTab === 'subscribers' && (
+        <Panel>
+          <div className={toolbar}>
+            <SearchInput
+              value={subscriberSearch}
+              onChange={setSubscriberSearch}
+              placeholder="Search email or name"
+              label="Search subscribers"
+              className="sm:max-w-sm sm:flex-1"
+            />
+          </div>
+          {filteredSubscribers.length === 0 ? (
+            <div className="p-6">
+              <EmptyState
+                icon={Mail}
+                title={subscribers.length === 0 ? 'No subscribers yet' : 'No subscribers match'}
+                description={subscribers.length === 0 ? 'People who sign up in the site footer will appear here.' : 'Try a different search.'}
+              />
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/70 hover:bg-gray-50/70">
+                    <TableHead>Email</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Subscribed</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subscriberPages.pageItems.map((subscriber) => (
+                    <TableRow key={subscriber.id}>
+                      <TableCell className="font-medium text-gray-900">{subscriber.email}</TableCell>
+                      <TableCell className="text-gray-700">{subscriber.first_name || '—'}</TableCell>
+                      <TableCell className="capitalize text-gray-600">{subscriber.subscription_source?.replace(/-/g, ' ') || '—'}</TableCell>
+                      <TableCell>
+                        <StatusBadge tone={subscriber.is_active ? 'green' : 'gray'}>{subscriber.is_active ? 'Active' : 'Unsubscribed'}</StatusBadge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-gray-600">{formatDate(subscriber.created_date)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination {...subscriberPages} />
+            </>
+          )}
+        </Panel>
+      )}
+
+      {/* Keyed per referral: the modal copies the referral into form state on mount,
+          so reusing one instance would show (and save) stale values. */}
+      <ReferralDetailModal
+        key={selectedReferral?.id ?? 'none'}
+        referral={selectedReferral}
+        isOpen={!!selectedReferral}
+        onClose={() => setSelectedReferral(null)}
+        onUpdate={() => {
+          setSelectedReferral(null);
+          loadDashboardData();
+          toast.success('Referral updated');
+        }}
+      />
+    </AdminShell>
   );
 }

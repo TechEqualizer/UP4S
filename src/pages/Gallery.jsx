@@ -141,7 +141,7 @@ export default function Gallery() {
                 aria-label={`${item.media_type === 'video' ? 'Play' : 'View'}: ${item.title}`}
               >
                 <div className="relative overflow-hidden rounded-2xl shadow-md group-hover:shadow-xl transition-shadow duration-300">
-                  <div className="aspect-video relative">
+                  <div className="aspect-video relative overflow-hidden">
                     <SmartImage
                       src={getDisplayImage(item)}
                       fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
@@ -199,7 +199,7 @@ export default function Gallery() {
                 <X className="w-5 h-5" />
               </Button>
               
-              <div className="aspect-video relative bg-black">
+              <div className="aspect-video relative overflow-hidden bg-black">
                 {selectedItem.media_type === 'video' ? (
                   selectedItem.is_external_url ? (
                     <VideoEmbed 
