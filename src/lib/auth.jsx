@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { Lock } from 'lucide-react';
 import { supabase } from '@/api/supabaseClient';
+import AuthShell from '@/components/admin/AuthShell';
 
 const AuthContext = createContext({ session: null, isAdmin: false, isLoading: true });
 
@@ -59,8 +61,8 @@ export function RequireAdmin({ children }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-gray-50" role="status" aria-label="Loading">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     );
   }
@@ -72,20 +74,23 @@ export function RequireAdmin({ children }) {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center px-4">
-        <div className="max-w-md text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">Not authorized</h1>
-          <p className="text-gray-600 mb-6">
-            {session.user.email} is signed in but doesn&apos;t have admin access.
-          </p>
-          <button
-            onClick={signOut}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700"
-          >
-            Sign out
-          </button>
-        </div>
-      </div>
+      <AuthShell>
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+          <Lock className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <h1 className="mt-6 font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">No admin access</h1>
+        <p className="mt-3 text-gray-600">
+          <span className="font-medium text-gray-900">{session.user.email}</span> is signed in but isn&apos;t on the
+          admin list. Ask an existing admin to add you, or sign in with a different account.
+        </p>
+        <button
+          type="button"
+          onClick={signOut}
+          className="mt-8 inline-flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 font-semibold text-white shadow-lg shadow-blue-600/20 hover:from-blue-700 hover:to-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+        >
+          Sign out and switch account
+        </button>
+      </AuthShell>
     );
   }
 

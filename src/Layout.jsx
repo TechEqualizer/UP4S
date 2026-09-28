@@ -116,8 +116,8 @@ export default function Layout({ children, currentPageName }) {
     setIsNewsletterSubmitting(false);
   };
 
-  // The dashboard renders its own app shell (sidebar + top bar).
-  if (currentPageName === 'AdminDashboard') return <>{children}</>;
+  // The dashboard and sign-in page render their own full-screen shells.
+  if (currentPageName === 'AdminDashboard' || currentPageName === 'Login') return <>{children}</>;
 
   if (isAdminPage) {
     return (
