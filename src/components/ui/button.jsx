@@ -1,4 +1,5 @@
 import React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
 
 const variants = {
@@ -25,7 +26,8 @@ const buttonVariants = ({ variant = "default", size = "default", className } = {
 );
 
 const Button = React.forwardRef(({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
-  const Comp = asChild ? "span" : "button";
+  // asChild: render the child (e.g. a router <Link>) as the button itself.
+  const Comp = asChild ? Slot : "button";
 
   return (
     <Comp

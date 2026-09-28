@@ -7,12 +7,14 @@
 //     [--keep-test-donations]
 //
 // - Records are matched on their Base44 id (newsletter subscribers on email), so
-//   re-running only adds what's new; rows already in Supabase are left untouched.
+//   re-running only adds what's new; existing rows are otherwise left untouched.
 // - Files hosted by Base44 (gallery media, event images, referral attachments) are
 //   copied into Supabase Storage and the links rewritten, since they disappear
-//   when the Base44 app is deleted. --skip-media keeps the Base44 links.
-// - With STRIPE_SECRET_KEY set, donations still marked pending are checked against
-//   Stripe and marked completed/expired to match what actually happened.
+//   when the Base44 app is deleted. This also covers rows already in Supabase that
+//   still link to Base44 (e.g. imported earlier with --skip-media, which keeps the
+//   Base44 links).
+// - With STRIPE_SECRET_KEY set, donations marked pending (new or already imported)
+//   are checked against Stripe and marked completed/expired to match what happened.
 // - Donations of $1 or less were checkout tests and are skipped (each is listed);
 //   --keep-test-donations imports them too.
 // - --dry-run reads everything and prints what would be imported, writing nothing.
@@ -187,7 +189,10 @@ async function copyReferralFiles(files) {
 // Stripe
 // ---------------------------------------------------------------------------
 
+const checkedSessions = new Set();
+
 async function stripeSessionStatus(sessionId) {
+  checkedSessions.add(sessionId);
   const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
     headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` },
   });
@@ -321,7 +326,7 @@ async function importDonations(eventIds) {
   await insertRows('donations', rows);
   summary.push(['Donations', records.length, rows.length]);
   if (STRIPE_SECRET_KEY) {
-    console.log(`  Stripe check of pending donations: ${reconciled.completed} paid, ` +
+    if (reconciled.completed + reconciled.expired + reconciled.pending > 0) console.log(`  Stripe check of pending donations: ${reconciled.completed} paid, ` +
       `${reconciled.expired} expired, ${reconciled.pending} still open`);
   } else if (rows.some((row) => row.payment_status === 'pending')) {
     console.log('  Tip: set STRIPE_SECRET_KEY to check pending donations against Stripe.');
@@ -410,6 +415,71 @@ async function importReferrals() {
   summary.push(['Kid referrals', records.length, rows.length]);
 }
 
+// Rows already in Supabase: move leftover Base44 files, re-check pending donations.
+async function catchUpExistingRows() {
+  if (dryRun) return;
+  let relinked = 0;
+
+  if (!skipMedia) {
+    const { data: items, error } = await supabase
+      .from('gallery_items').select('id, media_url').eq('is_external_url', false);
+    if (error) throw new Error(`Reading gallery_items: ${error.message}`);
+    for (const item of items.filter((i) => isBase44Hosted(i.media_url))) {
+      const media_url = await copyPublicMedia(item.media_url);
+      const { error: updateError } = await supabase.from('gallery_items').update({ media_url }).eq('id', item.id);
+      if (updateError) throw new Error(`Updating gallery item ${item.id}: ${updateError.message}`);
+      relinked++;
+    }
+
+    const { data: events, error: eventsError } = await supabase
+      .from('fundraising_events').select('id, image_url');
+    if (eventsError) throw new Error(`Reading fundraising_events: ${eventsError.message}`);
+    for (const event of events.filter((e) => e.image_url && isBase44Hosted(e.image_url))) {
+      const image_url = await copyPublicMedia(event.image_url);
+      const { error: updateError } = await supabase.from('fundraising_events').update({ image_url }).eq('id', event.id);
+      if (updateError) throw new Error(`Updating event ${event.id}: ${updateError.message}`);
+      relinked++;
+    }
+
+    const { data: referrals, error: referralsError } = await supabase
+      .from('kid_referrals').select('id, uploaded_files');
+    if (referralsError) throw new Error(`Reading kid_referrals: ${referralsError.message}`);
+    for (const referral of referrals) {
+      const files = Array.isArray(referral.uploaded_files) ? referral.uploaded_files : [];
+      if (!files.some((f) => f?.url && isBase44Hosted(f.url))) continue;
+      const uploaded_files = await copyReferralFiles(files);
+      const { error: updateError } = await supabase.from('kid_referrals').update({ uploaded_files }).eq('id', referral.id);
+      if (updateError) throw new Error(`Updating referral ${referral.id}: ${updateError.message}`);
+      relinked++;
+    }
+    if (relinked > 0) console.log(`  Moved Base44 files for ${relinked} existing row(s).`);
+  }
+
+  if (STRIPE_SECRET_KEY) {
+    const { data: pending, error } = await supabase
+      .from('donations').select('id, stripe_session_id')
+      .eq('payment_status', 'pending').like('stripe_session_id', 'cs_%');
+    if (error) throw new Error(`Reading donations: ${error.message}`);
+    const counts = { completed: 0, expired: 0, pending: 0 };
+    for (const donation of pending.filter((d) => !checkedSessions.has(d.stripe_session_id))) {
+      const result = await stripeSessionStatus(donation.stripe_session_id);
+      counts[result.status]++;
+      if (result.status === 'pending') continue;
+      const update = { payment_status: result.status };
+      if (result.paymentIntent) update.stripe_payment_intent_id = result.paymentIntent;
+      // Direct update, not complete_donation(): imported events already carry their
+      // Base44 amount_raised, so don't add these to it again.
+      const { error: updateError } = await supabase.from('donations').update(update).eq('id', donation.id);
+      if (updateError) throw new Error(`Updating donation ${donation.id}: ${updateError.message}`);
+    }
+    const checked = counts.completed + counts.expired + counts.pending;
+    if (checked > 0) {
+      console.log(`  Stripe check of ${checked} pending donation(s) already in Supabase: ` +
+        `${counts.completed} paid, ${counts.expired} expired, ${counts.pending} still open`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 try {
@@ -419,6 +489,7 @@ try {
   await importGallery();
   await importNewsletter();
   await importReferrals();
+  await catchUpExistingRows();
 
   console.log(`\n${'Entity'.padEnd(24)}${'In export'.padEnd(11)}${dryRun ? 'Would import' : 'Imported'}`);
   for (const [name, total, imported] of summary) {
