@@ -61,8 +61,17 @@ async function setSessionStatus(session: Stripe.Checkout.Session, status: 'faile
 async function recordRenewal(invoice: Stripe.Invoice) {
   if (invoice.billing_reason !== 'subscription_cycle') return;
 
-  const subscriptionId = stripeId(invoice.subscription);
-  const meta = invoice.subscription_details?.metadata ?? {};
+  // API version 2025-03-31.basil moved subscription details under invoice.parent;
+  // read both shapes so the endpoint works whichever version it is pinned to.
+  const legacy = invoice as unknown as {
+    subscription?: string | { id: string } | null;
+    subscription_details?: { metadata?: Record<string, string> | null } | null;
+  };
+  const parentDetails = (invoice as unknown as {
+    parent?: { subscription_details?: { subscription?: string | { id: string } | null; metadata?: Record<string, string> | null } | null } | null;
+  }).parent?.subscription_details;
+  const subscriptionId = stripeId(legacy.subscription ?? parentDetails?.subscription);
+  const meta = legacy.subscription_details?.metadata ?? parentDetails?.metadata ?? {};
 
   const { error } = await supabaseAdmin.from('donations').upsert({
     amount: invoice.amount_paid / 100,
