@@ -13,6 +13,7 @@ export default function Layout({ children, currentPageName }) {
   const { session } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
+  const [donationEvent, setDonationEvent] = useState(null);
 
   // Newsletter signup state
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -20,7 +21,12 @@ export default function Layout({ children, currentPageName }) {
 
   // Global handler for opening the donation modal
   useEffect(() => {
-    const handleOpenModal = () => setShowDonationModal(true);
+    // Fundraising event cards pass { eventId, eventTitle } to donate toward that event.
+    const handleOpenModal = (e) => {
+      const { eventId, eventTitle } = e.detail || {};
+      setDonationEvent(eventId ? { id: eventId, title: eventTitle } : null);
+      setShowDonationModal(true);
+    };
     window.addEventListener('openDonationModal', handleOpenModal);
     return () => {
       window.removeEventListener('openDonationModal', handleOpenModal);
@@ -296,7 +302,7 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </footer>
 
-      <DonationModal isOpen={showDonationModal} onClose={() => setShowDonationModal(false)} />
+      <DonationModal isOpen={showDonationModal} event={donationEvent} onClose={() => setShowDonationModal(false)} />
     </div>
   );
 }

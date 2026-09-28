@@ -2,6 +2,8 @@
 --
 -- Column names (including created_date / updated_date) match the Base44 field
 -- names so the frontend and any exported Base44 data map across unchanged.
+-- base44_id holds the original record id so scripts/import-base44.mjs can be
+-- re-run without creating duplicates.
 
 -- ---------------------------------------------------------------------------
 -- Admins
@@ -53,22 +55,44 @@ $$;
 -- Tables
 -- ---------------------------------------------------------------------------
 
+create table public.fundraising_events (
+  id uuid primary key default gen_random_uuid(),
+  created_date timestamptz not null default now(),
+  updated_date timestamptz not null default now(),
+  title text not null,
+  description text,
+  event_date timestamptz,
+  location text,
+  fundraising_goal numeric(12, 2),
+  -- Includes offline money entered by admins; completed online donations
+  -- linked to the event are added by complete_donation().
+  amount_raised numeric(12, 2) not null default 0,
+  image_url text,
+  is_active boolean not null default true,
+  base44_id text unique
+);
+
 create table public.donations (
   id uuid primary key default gen_random_uuid(),
   created_date timestamptz not null default now(),
   updated_date timestamptz not null default now(),
   amount numeric(10, 2) not null check (amount > 0),
+  currency text not null default 'usd',
   donation_type text not null default 'one-time'
     check (donation_type in ('one-time', 'monthly')),
   donor_name text,
   donor_email text,
   fund_designation text not null default 'general',
+  event_id uuid references public.fundraising_events (id) on delete set null,
+  is_anonymous boolean not null default false,
+  dedication_message text,
   payment_status text not null default 'pending'
     check (payment_status in ('pending', 'completed', 'failed', 'expired', 'refunded')),
   stripe_session_id text unique,
   stripe_payment_intent_id text,
   stripe_subscription_id text,
-  stripe_invoice_id text unique
+  stripe_invoice_id text unique,
+  base44_id text unique
 );
 
 create table public.kid_referrals (
@@ -87,7 +111,8 @@ create table public.kid_referrals (
   uploaded_files jsonb not null default '[]'::jsonb,
   status text not null default 'pending',
   admin_notes text,
-  follow_up_date date
+  follow_up_date date,
+  base44_id text unique
 );
 
 create table public.gallery_items (
@@ -103,7 +128,8 @@ create table public.gallery_items (
   child_name text,
   child_age integer,
   is_featured boolean not null default false,
-  display_order integer not null default 0
+  display_order integer not null default 0,
+  base44_id text unique
 );
 
 create table public.newsletter_subscribers (
@@ -130,21 +156,8 @@ create table public.fundraising_campaigns (
   is_active boolean not null default true
 );
 
-create table public.fundraising_events (
-  id uuid primary key default gen_random_uuid(),
-  created_date timestamptz not null default now(),
-  updated_date timestamptz not null default now(),
-  title text not null,
-  description text,
-  event_date timestamptz,
-  location text,
-  fundraising_goal numeric(12, 2),
-  amount_raised numeric(12, 2) not null default 0,
-  image_url text,
-  is_active boolean not null default true
-);
-
 create index donations_created_date_idx on public.donations (created_date desc);
+create index donations_event_id_idx on public.donations (event_id);
 create index kid_referrals_created_date_idx on public.kid_referrals (created_date desc);
 create index gallery_items_display_order_idx on public.gallery_items (display_order);
 create index gallery_items_featured_idx on public.gallery_items (display_order) where is_featured;
@@ -166,6 +179,47 @@ begin
   end loop;
 end;
 $$;
+
+-- Marks a checkout's donation completed and, the first time only, adds it to
+-- the linked event's amount_raised. Called by the stripe-webhook function;
+-- Stripe may deliver an event more than once, so this must be idempotent.
+create or replace function public.complete_donation(
+  p_session_id text,
+  p_payment_intent_id text default null,
+  p_subscription_id text default null
+)
+returns boolean
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_event_id uuid;
+  v_amount numeric;
+begin
+  update public.donations
+     set payment_status = 'completed',
+         stripe_payment_intent_id = coalesce(p_payment_intent_id, stripe_payment_intent_id),
+         stripe_subscription_id = coalesce(p_subscription_id, stripe_subscription_id)
+   where stripe_session_id = p_session_id
+     and payment_status <> 'completed'
+  returning event_id, amount into v_event_id, v_amount;
+
+  if not found then
+    return false;
+  end if;
+
+  if v_event_id is not null then
+    update public.fundraising_events
+       set amount_raised = amount_raised + v_amount
+     where id = v_event_id;
+  end if;
+
+  return true;
+end;
+$$;
+
+revoke all on function public.complete_donation(text, text, text) from public, anon, authenticated;
+grant execute on function public.complete_donation(text, text, text) to service_role;
 
 -- Expose the tables to the Data API explicitly (newer projects don't by
 -- default). Row level security below decides what each role can actually do.
@@ -203,7 +257,9 @@ create policy "Admins manage fundraising campaigns"
 -- may read or change them. Submissions can't pre-set review fields.
 create policy "Anyone can submit a referral"
   on public.kid_referrals for insert to anon, authenticated
-  with check (status = 'pending' and admin_notes is null and follow_up_date is null);
+  with check (
+    status = 'pending' and admin_notes is null and follow_up_date is null and base44_id is null
+  );
 create policy "Admins read referrals"
   on public.kid_referrals for select to authenticated using (public.is_admin());
 create policy "Admins update referrals"

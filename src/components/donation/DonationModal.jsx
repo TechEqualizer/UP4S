@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Heart, CreditCard, Loader2 } from 'lucide-react';
 import { createStripeCheckout } from '@/api/functions';
 
-export default function DonationModal({ isOpen, onClose }) {
+export default function DonationModal({ isOpen, onClose, event }) {
   const [amount, setAmount] = useState('');
   const [customAmount, setCustomAmount] = useState('');
   const [donationType, setDonationType] = useState('one-time');
@@ -40,6 +40,7 @@ export default function DonationModal({ isOpen, onClose }) {
         donor_name: donorInfo.name,
         donor_email: donorInfo.email,
         fund_designation: 'general',
+        event_id: event?.id,
         success_url: `${window.location.origin}/DonationSuccess`,
         cancel_url: window.location.href
       };
@@ -74,7 +75,9 @@ export default function DonationModal({ isOpen, onClose }) {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Make a Donation</h2>
           <p className="text-gray-600">
-            Help us create dreams on film for kids facing life's toughest challenges
+            {event
+              ? <>Supporting <span className="font-semibold text-gray-900">{event.title}</span></>
+              : "Help us create dreams on film for kids facing life's toughest challenges"}
           </p>
         </div>
 

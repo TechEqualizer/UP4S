@@ -55,6 +55,21 @@ Deno.serve(async (req) => {
     return json({ error: 'Name and a valid email are required' }, 400);
   }
 
+  // Optional: donation toward a specific fundraising event.
+  let eventId: string | null = null;
+  if (body.event_id) {
+    const { data: event } = await supabaseAdmin
+      .from('fundraising_events')
+      .select('id')
+      .eq('id', String(body.event_id))
+      .eq('is_active', true)
+      .maybeSingle();
+    if (!event) return json({ error: 'Unknown or inactive fundraising event' }, 400);
+    eventId = event.id;
+  }
+  const isAnonymous = body.is_anonymous === true;
+  const dedicationMessage = String(body.dedication_message ?? '').trim().slice(0, 500) || null;
+
   const successUrl = new URL(sameSiteUrl(body.success_url, '/DonationSuccess'));
   // Stripe substitutes the real id; build the query by hand so the braces aren't escaped.
   const successUrlWithSession =
@@ -66,6 +81,7 @@ Deno.serve(async (req) => {
     donor_email: donorEmail,
     donation_type: donationType,
     fund_designation: fundDesignation,
+    ...(eventId ? { event_id: eventId } : {}),
   };
   const productName = donationType === 'monthly' ? 'Monthly donation to UP4S' : 'Donation to UP4S';
 
@@ -96,6 +112,9 @@ Deno.serve(async (req) => {
       donor_name: donorName,
       donor_email: donorEmail,
       fund_designation: fundDesignation,
+      event_id: eventId,
+      is_anonymous: isAnonymous,
+      dedication_message: dedicationMessage,
       payment_status: 'pending',
       stripe_session_id: session.id,
     });

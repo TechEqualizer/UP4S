@@ -76,7 +76,7 @@ export function RequireAdmin({ children }) {
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-3">Not authorized</h1>
           <p className="text-gray-600 mb-6">
-            {session.user.email} is signed in but doesn't have admin access.
+            {session.user.email} is signed in but doesn&apos;t have admin access.
           </p>
           <button
             onClick={signOut}
