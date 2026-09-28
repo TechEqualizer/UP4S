@@ -1,5 +1,11 @@
-import { base44 } from './base44Client';
+import { supabase } from './supabaseClient';
 
-// Export all functions from Base44 SDK
-export const createStripeCheckout = base44.functions.createStripeCheckout;
-export const stripeWebhook = base44.functions.stripeWebhook;
+// Calls the create-stripe-checkout edge function (supabase/functions).
+// Resolves to { checkout_url }.
+export async function createStripeCheckout(checkoutData) {
+  const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+    body: checkoutData,
+  });
+  if (error) throw error;
+  return data;
+}

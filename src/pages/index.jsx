@@ -1,26 +1,32 @@
+import { lazy, Suspense } from "react";
+
 import Layout from "../Layout.jsx";
 
-import Homepage from "../../Homepage";
+import Homepage from "./Homepage";
 
-import ReferKid from "../../ReferKid";
+import ReferKid from "./ReferKid";
 
-import Gallery from "../../Gallery";
+import Gallery from "./Gallery";
 
-import About from "../../About";
+import About from "./About";
 
-import AdminDashboard from "../../AdminDashboard";
+const AdminDashboard = lazy(() => import("./AdminDashboard"));
 
-import ProductionChecklist from "../../ProductionChecklist";
+const ProductionChecklist = lazy(() => import("./ProductionChecklist"));
 
-import PrivacyPolicy from "../../PrivacyPolicy";
+import PrivacyPolicy from "./PrivacyPolicy";
 
-import TermsOfService from "../../TermsOfService";
+import TermsOfService from "./TermsOfService";
 
-import Fundraising from "../../Fundraising";
+import Fundraising from "./Fundraising";
 
-import DonationSuccess from "../../DonationSuccess";
+import DonationSuccess from "./DonationSuccess";
 
-import TestingDashboard from "../../TestingDashboard";
+const TestingDashboard = lazy(() => import("./TestingDashboard"));
+
+import Login from "./Login";
+
+import { AuthProvider, RequireAdmin } from "@/lib/auth";
 
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -48,6 +54,17 @@ const PAGES = {
     
     TestingDashboard: TestingDashboard,
     
+    Login: Login,
+    
+}
+
+// Admin-only pages are split into their own chunks so public visitors don't download them.
+function PageLoading() {
+    return (
+        <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="Loading">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+    );
 }
 
 function _getCurrentPage(url) {
@@ -70,6 +87,7 @@ function PagesContent() {
     
     return (
         <Layout currentPageName={currentPage}>
+            <Suspense fallback={<PageLoading />}>
             <Routes>            
                 
                     <Route path="/" element={<Homepage />} />
@@ -83,9 +101,9 @@ function PagesContent() {
                 
                 <Route path="/About" element={<About />} />
                 
-                <Route path="/AdminDashboard" element={<AdminDashboard />} />
+                <Route path="/AdminDashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
                 
-                <Route path="/ProductionChecklist" element={<ProductionChecklist />} />
+                <Route path="/ProductionChecklist" element={<RequireAdmin><ProductionChecklist /></RequireAdmin>} />
                 
                 <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
                 
@@ -95,9 +113,12 @@ function PagesContent() {
                 
                 <Route path="/DonationSuccess" element={<DonationSuccess />} />
                 
-                <Route path="/TestingDashboard" element={<TestingDashboard />} />
+                <Route path="/TestingDashboard" element={<RequireAdmin><TestingDashboard /></RequireAdmin>} />
+                
+                <Route path="/Login" element={<Login />} />
                 
             </Routes>
+            </Suspense>
         </Layout>
     );
 }
@@ -105,7 +126,9 @@ function PagesContent() {
 export default function Pages() {
     return (
         <Router>
-            <PagesContent />
+            <AuthProvider>
+                <PagesContent />
+            </AuthProvider>
         </Router>
     );
 }

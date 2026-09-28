@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /AdminDashboard
+Disallow: /Login
+Disallow: /TestingDashboard
+Disallow: /ProductionChecklist
+Disallow: /DonationSuccess
+
+Sitemap: https://www.teamup4s.org/sitemap.xml

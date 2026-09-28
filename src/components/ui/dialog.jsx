@@ -1,13 +1,42 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 const Dialog = ({ open, onOpenChange, children }) => {
+  const containerRef = useRef(null);
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
+
+  // While open: lock page scroll, close on Escape, move focus in, restore it on close.
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => {
+      if (e.key === 'Escape') onOpenChangeRef.current?.(false);
+    };
+    window.addEventListener('keydown', onKey);
+    // Focus the dialog itself (not e.g. a video iframe, which would swallow Escape).
+    containerRef.current?.focus({ preventScroll: true });
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKey);
+      previouslyFocused?.focus?.({ preventScroll: true });
+    };
+  }, [open]);
+
   if (!open) return null;
-  
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div 
-        className="fixed inset-0 bg-black/50" 
+    <div
+      ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none"
+    >
+      <div
+        className="fixed inset-0 bg-black/70 animate-fade-in"
         onClick={() => onOpenChange(false)}
       />
       {children}
