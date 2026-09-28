@@ -16,19 +16,22 @@ export default function Homepage() {
 
   const heroSlides = [
     {
-      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1920&h=1080&fit=crop&crop=center",
+      image: "/hero/drumline.jpg",
+      position: "center 30%",
       title: "Rewrite Their Story",
       subtitle: "Through Film & Media Arts",
       description: "Empowering disadvantaged youth in Metro Detroit with professional filmmaking tools and mentorship."
     },
     {
-      image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1920&h=1080&fit=crop&crop=center",
+      image: "/hero/kids-group.jpg",
+      position: "center 35%",
       title: "From Street to Studio",
       subtitle: "Building Brighter Futures",
       description: "Providing a creative outlet and path away from trauma through professional media training."
     },
     {
-      image: "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=1920&h=1080&fit=crop&crop=center",
+      image: "/hero/brunch-smile.jpg",
+      position: "45% 35%",
       title: "Every Voice Matters",
       subtitle: "Every Story Counts",
       description: "Helping young people tell their stories and build confidence through creative expression."
@@ -111,7 +114,7 @@ export default function Homepage() {
             {/* Background Image and Overlay */}
             <div
               className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${slide.image})` }}
+              style={{ backgroundImage: `url(${slide.image})`, backgroundPosition: slide.position }}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
             </div>
@@ -140,7 +143,7 @@ export default function Homepage() {
                   <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                     <Button
                       onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-                      className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-10 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300 shadow-2xl"
+                      className="h-auto bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-10 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300 shadow-2xl"
                     >
                       <Heart className="w-5 h-5 mr-2" />
                       Make Tax-Deductible Gift
@@ -148,9 +151,9 @@ export default function Homepage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-white text-white hover:bg-white hover:text-gray-900 px-10 py-4 rounded-full text-lg font-semibold backdrop-blur-sm"
+                      className="h-auto bg-transparent border-white text-white hover:bg-white hover:text-gray-900 px-10 py-4 rounded-full text-lg font-semibold backdrop-blur-sm"
                     >
-                      <Link to={createPageUrl("About")}>
+                      <Link to={createPageUrl("About")} className="inline-flex items-center">
                         Learn Our Story
                         <ArrowRight className="w-5 h-5 ml-2" />
                       </Link>
@@ -168,6 +171,7 @@ export default function Homepage() {
             <button
               key={index}
               onClick={() => setCurrentHeroSlide(index)}
+              aria-label={`Show slide ${index + 1}`}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 index === currentHeroSlide ? 'bg-white scale-125' : 'bg-white/40'
               }`}
