@@ -78,6 +78,11 @@ async function recordRenewal(invoice: Stripe.Invoice) {
 }
 
 Deno.serve(async (req) => {
+  if (!webhookSecret.startsWith('whsec_')) {
+    console.error('STRIPE_WEBHOOK_SECRET is missing or is not a webhook signing secret (expected whsec_...)');
+    return new Response('Webhook not configured', { status: 500 });
+  }
+
   const signature = req.headers.get('stripe-signature');
   if (!signature) return new Response('Missing signature', { status: 400 });
 

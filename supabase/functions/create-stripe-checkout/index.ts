@@ -1,7 +1,7 @@
 // Creates a Stripe Checkout session for a donation and records it as pending.
 // Called from the browser via supabase.functions.invoke('create-stripe-checkout').
 
-import { stripe, supabaseAdmin } from '../_shared/stripe.ts';
+import { stripe, stripeConfigured, supabaseAdmin } from '../_shared/stripe.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,6 +34,10 @@ function sameSiteUrl(value: unknown, fallbackPath: string): string {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!stripeConfigured) {
+    console.error('STRIPE_SECRET_KEY is missing or is not a secret key (expected sk_... or rk_...)');
+    return json({ error: 'Online donations are not set up yet' }, 503);
+  }
 
   let body: Record<string, unknown>;
   try {

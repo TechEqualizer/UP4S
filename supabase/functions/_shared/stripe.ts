@@ -1,7 +1,15 @@
 import Stripe from 'npm:stripe@17';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-export const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
+const secretKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
+
+// A usable key is a secret (sk_) or restricted (rk_) key, not a publishable
+// key (pk_) or a key's ID (mk_), which are easy to paste by mistake.
+export const stripeConfigured = /^(sk|rk)_(test|live)_/.test(secretKey);
+
+// The Stripe constructor throws on an empty key; at module load that would
+// crash the function before it can answer, even the browser's CORS preflight.
+export const stripe = new Stripe(secretKey || 'sk_not_configured', {
   httpClient: Stripe.createFetchHttpClient(),
 });
 
