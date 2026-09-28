@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import VideoEmbed, { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
+import SmartImage from '@/components/ui/smart-image';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/index';
 
@@ -70,14 +71,17 @@ export default function Homepage() {
     loadFeaturedGallery();
   }, []);
 
-  // Auto-play for hero slideshow
+  // Auto-play for hero slideshow: paused while hovered/focused, off for reduced motion
+  const [isHeroPaused, setIsHeroPaused] = useState(false);
   useEffect(() => {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (isHeroPaused || reduceMotion) return;
     const timer = setInterval(() => {
       setCurrentHeroSlide((prevSlide) => (prevSlide + 1) % heroSlides.length);
     }, 6000);
 
     return () => clearInterval(timer);
-  }, [heroSlides.length]);
+  }, [heroSlides.length, isHeroPaused]);
 
   const loadFeaturedGallery = async () => {
     setIsLoading(true);
@@ -102,7 +106,15 @@ export default function Homepage() {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center bg-gray-900 overflow-hidden">
+      <section
+        className="relative min-h-[36rem] h-[calc(100svh-5rem)] flex items-center justify-center bg-gray-900 overflow-hidden"
+        aria-roledescription="carousel"
+        aria-label="Highlights"
+        onMouseEnter={() => setIsHeroPaused(true)}
+        onMouseLeave={() => setIsHeroPaused(false)}
+        onFocus={() => setIsHeroPaused(true)}
+        onBlur={() => setIsHeroPaused(false)}
+      >
         {/* Slides container */}
         {heroSlides.map((slide, index) => (
           <div
@@ -275,46 +287,43 @@ export default function Homepage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {featuredGallery.slice(0, 6).map((item, index) => (
-                <div
+                <button
+                  type="button"
                   key={item.id}
-                  className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 animate-fade-in cursor-pointer"
+                  className="group relative block w-full text-left overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 animate-fade-in focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/60"
                   style={{ animationDelay: `${index * 0.1}s` }}
                   onClick={() => setSelectedItem(item)}
+                  aria-label={`${item.media_type === 'video' ? 'Play' : 'View'}: ${item.title}`}
                 >
                   <div className="aspect-video relative">
-                    <img
+                    <SmartImage
                       src={getDisplayImage(item)}
-                      alt={item.title}
+                      fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
+                      alt=""
+                      placeholderIcon={item.media_type === 'video' ? 'video' : 'image'}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        if (item.is_external_url && item.media_type === 'video') {
-                          const thumbnail = getVideoThumbnail(item.media_url);
-                          if (thumbnail?.fallback && e.target.src !== thumbnail.fallback) {
-                            e.target.src = thumbnail.fallback;
-                          }
-                        }
-                      }}
                     />
 
                     {item.media_type === 'video' && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Play className="w-8 h-8 text-gray-900 ml-1" />
+                        <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <Play className="w-8 h-8 text-gray-900 ml-1" aria-hidden="true" />
                         </div>
                       </div>
                     )}
                   </div>
-                  
-                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/50 to-transparent text-white transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <h3 className="font-bold text-lg mb-2">{item.title}</h3>
+
+                  {/* Always visible: touch devices have no hover */}
+                  <div className="absolute bottom-0 left-0 right-0 p-5 pt-12 bg-gradient-to-t from-black/85 via-black/50 to-transparent text-white">
+                    <h3 className="font-bold text-lg leading-snug line-clamp-2">{item.title}</h3>
                     {item.child_name && (
-                      <p className="text-sm text-gray-200 flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        Created by {item.child_name}, age {item.child_age}
+                      <p className="mt-1 text-sm text-gray-200 flex items-center gap-2">
+                        <User className="w-4 h-4" aria-hidden="true" />
+                        Created by {item.child_name}{item.child_age ? `, age ${item.child_age}` : ''}
                       </p>
                     )}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -339,7 +348,7 @@ export default function Homepage() {
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Button
               onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-10 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300"
+              className="h-auto bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-10 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300"
             >
               <Heart className="w-5 h-5 mr-2" />
               Donate Today
@@ -347,7 +356,7 @@ export default function Homepage() {
             <Button
               asChild
               variant="outline"
-              className="border-white text-white hover:bg-white hover:text-blue-600 px-10 py-4 rounded-full text-lg font-semibold backdrop-blur-sm"
+              className="h-auto bg-transparent border-white text-white hover:bg-white hover:text-blue-600 px-10 py-4 rounded-full text-lg font-semibold backdrop-blur-sm"
             >
               <Link to={createPageUrl("ReferKid")}>
                 Refer a Child

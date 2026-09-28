@@ -9,10 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Target, Users, Handshake, Mail, Phone, MapPin, Heart, Calendar } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
+import SmartImage from '@/components/ui/smart-image';
+import { formatCurrency } from '@/lib/utils';
 
 export default function Fundraising() {
   const [events, setEvents] = useState([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+  const [expandedEvents, setExpandedEvents] = useState(() => new Set());
   const [volunteerForm, setVolunteerForm] = useState({
     name: '',
     email: '',
@@ -56,6 +59,15 @@ export default function Fundraising() {
     setIsSubmitting(false);
   };
 
+  const toggleEvent = (id) => {
+    setExpandedEvents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const handleEventDonate = (event) => {
     const customEvent = new CustomEvent('openDonationModal', {
       detail: { 
@@ -95,14 +107,22 @@ export default function Fundraising() {
               ))}
             </div>
           ) : events.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 ${events.length >= 3 ? 'lg:grid-cols-3' : 'max-w-5xl mx-auto'}`}>
               {events.map((event) => {
-                const progressPercentage = event.fundraising_goal > 0 ? Math.min(((event.amount_raised || 0) / event.fundraising_goal) * 100, 100) : 0;
+                const goal = Number(event.fundraising_goal) || 0;
+                const raised = Number(event.amount_raised) || 0;
+                const progressPercentage = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
+                const isPast = event.event_date && new Date(event.event_date) < new Date();
+                const isExpanded = expandedEvents.has(event.id);
+                const isLong = (event.description || '').length > 220;
                 return (
                   <Card key={event.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
                     {event.image_url && (
-                      <div className="aspect-video">
-                        <img src={event.image_url} alt={event.title} className="w-full h-full object-cover"/>
+                      <div className="aspect-video relative">
+                        <SmartImage src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
+                        {isPast && (
+                          <span className="absolute top-3 left-3 bg-gray-900/80 text-white text-xs font-semibold px-2.5 py-1 rounded-full">Past event</span>
+                        )}
                       </div>
                     )}
                     <CardHeader>
@@ -117,18 +137,40 @@ export default function Fundraising() {
                       </div>
                     </CardHeader>
                     <CardContent className="flex-grow flex flex-col">
-                      <p className="text-gray-600 mb-6 flex-grow">{event.description}</p>
+                      <div className="mb-6 flex-grow">
+                        <p className={`text-gray-600 leading-relaxed whitespace-pre-line ${isLong && !isExpanded ? 'line-clamp-4' : ''}`}>
+                          {event.description}
+                        </p>
+                        {isLong && (
+                          <button
+                            type="button"
+                            onClick={() => toggleEvent(event.id)}
+                            aria-expanded={isExpanded}
+                            className="mt-2 text-sm font-semibold text-blue-700 hover:text-blue-800 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                          >
+                            {isExpanded ? 'Show less' : 'Read more'}
+                          </button>
+                        )}
+                      </div>
                       <div>
                         <div className="flex justify-between items-center mb-2 text-sm">
                           <span className="text-gray-600">Raised</span>
-                          <span className="font-medium text-gray-800">${(event.amount_raised || 0).toLocaleString()} of ${(event.fundraising_goal || 0).toLocaleString()}</span>
+                          <span className="font-medium text-gray-800">
+                            <span className="text-base font-bold text-gray-900">{formatCurrency(raised)}</span> of {formatCurrency(goal)}
+                          </span>
                         </div>
                         <Progress value={progressPercentage} className="h-3" />
                         <p className="text-xs text-gray-500 mt-1">{progressPercentage.toFixed(0)}% of goal reached</p>
                       </div>
-                      <Button onClick={() => handleEventDonate(event)} className="w-full mt-6 bg-blue-600 hover:bg-blue-700">
-                        <Heart className="w-4 h-4 mr-2" /> Support This Event
-                      </Button>
+                      {isPast ? (
+                        <Button onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))} variant="outline" className="w-full mt-6">
+                          <Heart className="w-4 h-4 mr-2" /> Donate to UP4S
+                        </Button>
+                      ) : (
+                        <Button onClick={() => handleEventDonate(event)} className="w-full mt-6 bg-blue-600 hover:bg-blue-700">
+                          <Heart className="w-4 h-4 mr-2" /> Support This Event
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 );

@@ -4,7 +4,7 @@ import { GalleryItem } from '@/api/entities';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SmartImage from '@/components/ui/smart-image';
 import VideoEmbed, { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
 import { Play, Heart, User, X } from 'lucide-react';
 
@@ -19,8 +19,11 @@ export default function Gallery() {
     const loadGalleryItems = async () => {
       setIsLoading(true);
       try {
-        // Load items ordered by display_order
-        const items = await GalleryItem.list('display_order', 50);
+        // Admin-set display_order first, newest first within the same position
+        const items = (await GalleryItem.list('display_order', 500)).sort(
+          (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) ||
+            new Date(b.created_date) - new Date(a.created_date)
+        );
         setGalleryItems(items);
         setFilteredItems(items);
       } catch (error) {
@@ -45,8 +48,12 @@ export default function Gallery() {
     { value: 'all', label: 'All', count: galleryItems.length },
     { value: 'wishes-granted', label: 'Wishes', count: galleryItems.filter(i => i.category === 'wishes-granted').length },
     { value: 'events', label: 'Events', count: galleryItems.filter(i => i.category === 'events').length },
-    { value: 'behind-scenes', label: 'Behind Scenes', count: galleryItems.filter(i => i.category === 'behind-scenes').length }
+    { value: 'behind-scenes', label: 'Behind the Scenes', count: galleryItems.filter(i => i.category === 'behind-scenes').length }
   ];
+
+  const categoryLabel = (value) =>
+    categories.find((c) => c.value === value)?.label ??
+    value.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 
   const getDisplayImage = (item) => {
     if (item.is_external_url && item.media_type === 'video') {
@@ -73,26 +80,29 @@ export default function Gallery() {
 
         {/* Filter Tabs */}
         <div className="flex justify-center mb-8 sm:mb-12">
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-            <div className="overflow-x-auto pb-2 -mx-4 px-4">
-              <TabsList className="bg-gray-100 p-1 min-w-max">
-                {categories.map((category) => (
-                  <TabsTrigger 
-                    key={category.value} 
-                    value={category.value}
-                    className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-2"
-                  >
-                    {category.label}
-                    {category.count > 0 && (
-                      <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">
-                        {category.count}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          </Tabs>
+          <div role="group" aria-label="Filter by category" className="flex flex-wrap justify-center gap-2">
+            {categories.map((category) => {
+              const active = selectedCategory === category.value;
+              return (
+                <button
+                  key={category.value}
+                  type="button"
+                  onClick={() => setSelectedCategory(category.value)}
+                  aria-pressed={active}
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
+                    active
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {category.label}
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${active ? 'bg-white/20' : 'bg-gray-100 text-gray-600'}`}>
+                    {category.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Public Gallery Grid - Read-Only Display */}
@@ -122,93 +132,57 @@ export default function Gallery() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {filteredItems.map((item, index) => (
-              <div 
+              <button
+                type="button"
                 key={item.id}
-                className="group cursor-pointer animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className="group block w-full text-left rounded-2xl animate-fade-in focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/60"
+                style={{ animationDelay: `${Math.min(index, 12) * 0.05}s` }}
                 onClick={() => setSelectedItem(item)}
+                aria-label={`${item.media_type === 'video' ? 'Play' : 'View'}: ${item.title}`}
               >
-                <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500">
+                <div className="relative overflow-hidden rounded-2xl shadow-md group-hover:shadow-xl transition-shadow duration-300">
                   <div className="aspect-video relative">
-                    <img 
+                    <SmartImage
                       src={getDisplayImage(item)}
-                      alt={item.title}
+                      fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
+                      alt=""
+                      placeholderIcon={item.media_type === 'video' ? 'video' : 'image'}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        // Fallback for YouTube thumbnails
-                        if (item.is_external_url && item.media_type === 'video') {
-                          const thumbnail = getVideoThumbnail(item.media_url);
-                          // Only try to set fallback if it's different from current src to avoid infinite loop
-                          if (thumbnail?.fallback && e.currentTarget.src !== thumbnail.fallback) {
-                            e.currentTarget.src = thumbnail.fallback;
-                          }
-                        }
-                      }}
                     />
-                    
+
                     {item.media_type === 'video' && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white ml-1" />
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Play className="w-6 h-6 sm:w-7 sm:h-7 text-white ml-1" aria-hidden="true" />
                         </div>
                       </div>
                     )}
-                  </div>
-                  
-                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-black/70 via-black/50 to-transparent text-white transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <Badge className="mb-2 bg-white/20 text-white border-white/30 text-xs">
-                      {item.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </Badge>
-                    <h3 className="font-bold text-sm sm:text-base md:text-lg mb-1 line-clamp-2">{item.title}</h3>
-                    {item.child_name && (
-                      <p className="text-xs sm:text-sm text-gray-200 flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        Created by {item.child_name}, age {item.child_age}
-                      </p>
+
+                    {item.category && (
+                      <span className="absolute top-3 left-3 rounded-full bg-black/60 backdrop-blur-sm px-2.5 py-1 text-xs font-medium text-white">
+                        {categoryLabel(item.category)}
+                      </span>
                     )}
                   </div>
                 </div>
-                
-                {/* Public info display - no management controls */}
-                <div className="p-3 sm:p-4">
-                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-2 line-clamp-2">{item.title}</h3>
-                  <p className="text-gray-600 text-xs sm:text-sm line-clamp-3 mb-3">{item.description}</p>
-                  <div className="flex items-center justify-between">
-                    {item.child_name && (
-                      <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold leading-none">
-                            {item.child_name.charAt(0)}
-                          </span>
-                        </div>
-                        <span>{item.child_name}, {item.child_age}</span>
-                      </div>
-                    )}
-                    <Badge 
-                      variant="outline" 
-                      className="text-xs"
-                    >
-                      {item.media_type}
-                    </Badge>
-                  </div>
+
+                <div className="pt-4 px-1">
+                  <h3 className="font-bold text-base text-gray-900 mb-1.5 line-clamp-2 group-hover:text-blue-700 transition-colors">{item.title}</h3>
+                  {item.description && (
+                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">{item.description}</p>
+                  )}
+                  {item.child_name && (
+                    <p className="mt-3 flex items-center gap-2 text-sm text-gray-500">
+                      <User className="w-4 h-4" aria-hidden="true" />
+                      {item.child_name}{item.child_age ? `, age ${item.child_age}` : ''}
+                    </p>
+                  )}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
 
-        {/* Load More Button */}
-        {filteredItems.length > 0 && filteredItems.length % 50 === 0 && (
-          <div className="text-center mt-8 sm:mt-12 md:mt-16">
-            <Button 
-              variant="outline" 
-              className="px-6 sm:px-8 py-3"
-              onClick={() => { /* In a real app, this would fetch the next page of items */ }}
-            >
-              Load More Stories
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Lightbox Modal */}

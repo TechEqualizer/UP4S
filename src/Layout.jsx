@@ -6,12 +6,20 @@ import { Heart, Menu, X, Mail, Phone, MapPin } from "lucide-react";
 import DonationModal from "@/components/donation/DonationModal";
 import { useAuth, signOut } from "@/lib/auth";
 
+const NAV_ITEMS = [
+  { label: "Home", page: "Homepage" },
+  { label: "About", page: "About" },
+  { label: "Gallery", page: "Gallery" },
+  { label: "Support Us", page: "Fundraising" },
+];
+
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const isAdminPage = currentPageName?.startsWith('Admin') ||
     ['TestingDashboard', 'ProductionChecklist', 'Login'].includes(currentPageName);
   const { session } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
   const [donationEvent, setDonationEvent] = useState(null);
 
@@ -33,10 +41,32 @@ export default function Layout({ children, currentPageName }) {
     };
   }, []);
 
-  // Scroll to top on page navigation
+  // Scroll to top and close the mobile menu on page navigation
   useEffect(() => {
     window.scrollTo(0, 0);
+    setIsMenuOpen(false);
   }, [location.pathname]);
+
+  // Shadow under the sticky nav once the page is scrolled
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Mobile menu: lock page scroll behind it, close on Escape
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => e.key === 'Escape' && setIsMenuOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [isMenuOpen]);
 
   // Newsletter signup handler
   const handleNewsletterSubmit = async (e) => {
@@ -107,55 +137,74 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-white">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:bg-white focus:text-gray-900 focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg"
+      >
+        Skip to content
+      </a>
+
       {/* Navigation */}
-      <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50 transition-all duration-300">
+      <nav
+        aria-label="Main"
+        className={`bg-white/95 backdrop-blur-sm sticky top-0 z-50 transition-shadow duration-300 ${
+          isScrolled ? 'shadow-md border-b border-transparent' : 'border-b border-gray-100'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            <Link to={createPageUrl("Homepage")} className="group">
+            <Link to={createPageUrl("Homepage")} className="group rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
               <img
                 src="/team-up4s-logo.png"
-                alt="Team UP4S Logo"
+                alt="Team UP4S home"
                 className="h-16 w-auto transition-transform duration-300 group-hover:scale-105"
               />
             </Link>
 
-            <div className="hidden md:flex items-center space-x-8">
-              <Link to={createPageUrl("Homepage")} className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                Home
-              </Link>
-              <Link to={createPageUrl("About")} className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                About
-              </Link>
-              <Link to={createPageUrl("Gallery")} className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                Gallery
-              </Link>
-              <Link to={createPageUrl("Fundraising")} className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                Support Us
-              </Link>
-              <Link to={createPageUrl("ReferKid")} className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                Refer a Kid
-              </Link>
+            <div className="hidden md:flex items-center gap-1 lg:gap-2">
+              {NAV_ITEMS.map(({ label, page }) => {
+                const active = currentPageName === page;
+                return (
+                  <Link
+                    key={page}
+                    to={createPageUrl(page)}
+                    aria-current={active ? 'page' : undefined}
+                    className={`relative px-3 py-2 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
+                      active ? 'text-blue-700' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {label}
+                    {active && <span className="absolute left-3 right-3 -bottom-0.5 h-0.5 rounded-full bg-blue-600" />}
+                  </Link>
+                );
+              })}
             </div>
 
             <div className="hidden md:flex items-center gap-3">
-              <Link 
-                to={createPageUrl("ReferKid")} 
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-6 py-2 rounded-full font-semibold hover:from-yellow-500 hover:to-yellow-600 transition-all transform hover:scale-105"
+              <Link
+                to={createPageUrl("ReferKid")}
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-5 lg:px-6 py-2 rounded-full font-semibold hover:from-yellow-500 hover:to-yellow-600 transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-yellow-500"
               >
                 Refer a Kid
               </Link>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-full font-semibold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105"
+                className="inline-flex items-center bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 lg:px-6 py-2 rounded-full font-semibold hover:from-blue-700 hover:to-blue-800 transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-600"
               >
-                <Heart className="w-4 h-4 mr-2 inline" />
+                <Heart className="w-4 h-4 mr-2" aria-hidden="true" />
                 Donate Now
               </button>
             </div>
 
             <div className="md:hidden">
-              <button onClick={() => setIsMenuOpen(true)} className="p-2 rounded-md text-gray-700 hover:bg-gray-100">
-                <Menu className="w-6 h-6" />
+              <button
+                onClick={() => setIsMenuOpen(true)}
+                aria-label="Open menu"
+                aria-expanded={isMenuOpen}
+                aria-controls="mobile-menu"
+                className="p-2 -mr-2 rounded-lg text-gray-700 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              >
+                <Menu className="w-7 h-7" />
               </button>
             </div>
           </div>
@@ -164,50 +213,59 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 md:hidden" onClick={() => setIsMenuOpen(false)}>
-          <div
-            className="fixed top-0 right-0 h-full w-4/5 max-w-sm bg-white p-6 shadow-xl animate-slide-in-right"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-12">
-              <span className="font-bold text-lg">Menu</span>
-              <button onClick={() => setIsMenuOpen(false)} className="p-2 -mr-2">
-                <X className="w-6 h-6 text-gray-700" />
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Menu" id="mobile-menu">
+          <div className="absolute inset-0 bg-black/60 animate-fade-in" onClick={() => setIsMenuOpen(false)} />
+          <div className="absolute top-0 right-0 h-full w-[85%] max-w-sm bg-white shadow-2xl animate-slide-in-right flex flex-col">
+            <div className="flex justify-between items-center h-20 px-6 border-b border-gray-100">
+              <img src="/team-up4s-logo.png" alt="" className="h-12 w-auto" />
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                aria-label="Close menu"
+                className="p-2 -mr-2 rounded-lg text-gray-700 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              >
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="flex flex-col space-y-6">
-              <Link to={createPageUrl("Homepage")} className="text-lg text-gray-700 hover:text-blue-600 font-medium transition-colors" onClick={() => setIsMenuOpen(false)}>Home</Link>
-              <Link to={createPageUrl("About")} className="text-lg text-gray-700 hover:text-blue-600 font-medium transition-colors" onClick={() => setIsMenuOpen(false)}>About</Link>
-              <Link to={createPageUrl("Gallery")} className="text-lg text-gray-700 hover:text-blue-600 font-medium transition-colors" onClick={() => setIsMenuOpen(false)}>Gallery</Link>
-              <Link to={createPageUrl("Fundraising")} className="text-lg text-gray-700 hover:text-blue-600 font-medium transition-colors" onClick={() => setIsMenuOpen(false)}>Support Us</Link>
-              <Link to={createPageUrl("ReferKid")} className="text-lg text-gray-700 hover:text-blue-600 font-medium transition-colors" onClick={() => setIsMenuOpen(false)}>Refer a Kid</Link>
-            </div>
+            <nav aria-label="Mobile" className="flex-1 overflow-y-auto px-4 py-6">
+              <ul className="space-y-1">
+                {[...NAV_ITEMS, { label: 'Refer a Kid', page: 'ReferKid' }].map(({ label, page }) => {
+                  const active = currentPageName === page;
+                  return (
+                    <li key={page}>
+                      <Link
+                        to={createPageUrl(page)}
+                        aria-current={active ? 'page' : undefined}
+                        className={`block px-4 py-3 rounded-xl text-lg font-medium transition-colors ${
+                          active ? 'bg-blue-50 text-blue-700' : 'text-gray-800 hover:bg-gray-50'
+                        }`}
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
 
-            <div className="mt-12 pt-8 border-t border-gray-200 flex flex-col gap-4">
-              <Link 
-                to={createPageUrl("ReferKid")} 
-                onClick={() => setIsMenuOpen(false)} 
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 w-full py-3 rounded-full font-semibold text-lg text-center hover:from-yellow-500 hover:to-yellow-600 transition-all"
-              >
-                Refer a Kid
-              </Link>
+            <div className="p-6 border-t border-gray-100 flex flex-col gap-3">
               <button
                 onClick={() => {
-                  window.dispatchEvent(new CustomEvent('openDonationModal'));
                   setIsMenuOpen(false);
+                  window.dispatchEvent(new CustomEvent('openDonationModal'));
                 }}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white w-full py-3 rounded-full font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all"
+                className="inline-flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 text-white w-full py-3.5 rounded-full font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all"
               >
-                <Heart className="w-5 h-5 mr-2 inline" />
+                <Heart className="w-5 h-5 mr-2" aria-hidden="true" />
                 Donate Now
               </button>
+              <p className="text-center text-sm text-gray-500">501(c)(3) nonprofit · donations are tax-deductible</p>
             </div>
           </div>
         </div>
       )}
 
-      <main className="animate-fade-in">
+      <main id="main-content" className="animate-fade-in">
         {children}
       </main>
 
@@ -241,13 +299,14 @@ export default function Layout({ children, currentPageName }) {
                     placeholder="Enter your email"
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
-                    className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 flex-1 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="Email address"
+                    className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 flex-1 min-w-0 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                   <button
                     type="submit"
                     disabled={isNewsletterSubmitting || !newsletterEmail.trim()}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50"
+                    className="shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 px-4 sm:px-6 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50"
                   >
                     {isNewsletterSubmitting ? 'Subscribing...' : 'Subscribe'}
                   </button>
@@ -255,7 +314,7 @@ export default function Layout({ children, currentPageName }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 lg:col-span-2">
+            <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-8 lg:col-span-2">
               <div>
                 <h4 className="font-semibold mb-4">Quick Links</h4>
                 <ul className="space-y-3">
@@ -271,14 +330,14 @@ export default function Layout({ children, currentPageName }) {
                 <h4 className="font-semibold mb-4">Contact & Legal</h4>
                 <ul className="space-y-3">
                   <li>
-                    <a href="mailto:teamup4smi@gmail.com" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
+                    <a href="mailto:teamup4smi@gmail.com" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 min-w-0 break-all">
+                      <Mail className="w-4 h-4 shrink-0" aria-hidden="true" />
                       teamup4smi@gmail.com
                     </a>
                   </li>
                   <li>
                     <a href="tel:5862448492" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-                      <Phone className="w-4 h-4" />
+                      <Phone className="w-4 h-4 shrink-0" aria-hidden="true" />
                       586-244-8492
                     </a>
                   </li>
@@ -297,7 +356,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Team UP4S. All rights reserved. 501(c)(3) nonprofit organization. EIN: 92-2415944</p>
+            <p>&copy; {new Date().getFullYear()} Team UP4S. All rights reserved. 501(c)(3) nonprofit organization. EIN: 92-2415944</p>
           </div>
         </div>
       </footer>

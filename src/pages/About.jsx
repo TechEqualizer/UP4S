@@ -1,4 +1,5 @@
 import React from 'react';
+import SmartImage from '@/components/ui/smart-image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Heart, Camera, Users, Star, Award, Target, Tv, Building } from 'lucide-react';
@@ -47,21 +48,30 @@ export default function About() {
         <div className="absolute inset-0 opacity-10">
           <img
             src="https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=1920&h=1080&fit=crop"
-            alt="Background"
+            alt=""
             className="w-full h-full object-cover" />
 
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div className="text-center lg:text-left">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 leading-tight">
+              <p className="text-sm sm:text-base font-semibold uppercase tracking-[0.2em] text-yellow-300 mb-3 sm:mb-4">
                 Unlimited Potential 4 Success
-                <span className="block text-white">
-                  Founded on a Dream, Built for Our Community
-                </span>
-              </h1>
-              <p className="text-base sm:text-lg md:text-xl text-blue-100 mb-6 sm:mb-8 leading-relaxed">In 1999, Shannon Anderson dreamed of a place called "Unlimited Potential 4 Success." Today, his wife, founder Wendy Anderson, has brought that vision to life. Team UP4S is a 501(c)(3) nonprofit dedicated to diverting disadvantaged youth in Metro Detroit from street violence, drug use, and trauma. We provide professional training in film, media, and performing arts, empowering them to find their voice, build their future, and tell their story.
               </p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-5 sm:mb-6 leading-[1.1]">
+                Founded on a Dream, Built for Our Community
+              </h1>
+              <div className="space-y-4 text-base sm:text-lg text-blue-100 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                <p>
+                  In 1999, Shannon Anderson dreamed of a place called &ldquo;Unlimited Potential 4 Success.&rdquo;
+                  Today, his wife, founder Wendy Anderson, has brought that vision to life.
+                </p>
+                <p>
+                  Team UP4S is a 501(c)(3) nonprofit diverting disadvantaged youth in Metro Detroit from street
+                  violence, drug use, and trauma, with professional training in film, media, and the performing arts
+                  that helps them find their voice, build their future, and tell their story.
+                </p>
+              </div>
               <Button
                 onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal'))}
                 className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-yellow-600 px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold w-full sm:w-auto">
@@ -70,10 +80,10 @@ export default function About() {
               </Button>
             </div>
             <div className="relative mt-6 lg:mt-0 flex justify-center">
-              <img
+              <SmartImage
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/cc6b4c44b_Screenshot2025-08-24at92111AM.png"
                 alt="Wendy Anderson with her family"
-                className="w-full max-w-xs sm:max-w-sm rounded-2xl shadow-2xl" />
+                className="w-full max-w-xs sm:max-w-sm aspect-[4/5] object-cover rounded-2xl shadow-2xl" />
 
               <div className="absolute -bottom-3 -right-3 sm:-bottom-4 sm:-right-4 bg-white rounded-2xl p-3 sm:p-4 shadow-xl">
                 <div className="text-center">
@@ -152,10 +162,10 @@ export default function About() {
               </div>
             </div>
             <div className="relative">
-              <img
+              <SmartImage
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/f4939dbd3_Screenshot2025-08-24at92510AM.png"
                 alt="Children at a Team UP4S event"
-                className="w-full rounded-2xl shadow-2xl" />
+                className="w-full aspect-[4/3] object-cover rounded-2xl shadow-2xl" />
 
               <div className="absolute -bottom-6 -left-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
                 <p className="text-lg font-bold">Every child deserves to</p>
