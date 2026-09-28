@@ -3,6 +3,7 @@ import SmartImage from '@/components/ui/smart-image';
 import { Heart, Camera, Users, Target, Tv, Building, ArrowRight, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/index';
+import CountUp from '@/components/site/CountUp';
 import { Container, Section, SectionHeading, Eyebrow, CtaBand, Surface, ctaClass } from '@/components/site/ui';
 
 const FOUNDER_PHOTO = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/cc6b4c44b_Screenshot2025-08-24at92111AM.png";
@@ -121,7 +122,7 @@ export default function About() {
                 className={`flex flex-col px-4 py-10 text-center ${index < 2 ? 'border-b border-gray-100 lg:border-b-0' : ''} ${index % 2 === 0 ? 'border-r border-gray-100 lg:border-r-0' : ''}`}
               >
                 <dt className="order-2 mt-2 text-sm font-medium text-gray-500">{stat.label}</dt>
-                <dd className="order-1 font-display text-4xl font-bold tracking-tight tabular-nums text-gray-900">{stat.number}</dd>
+                <dd className="order-1 font-display text-4xl font-bold tracking-tight tabular-nums text-gray-900"><CountUp value={stat.number} from={/^\d{4}$/.test(stat.number) ? 2000 : 0} delay={index * 120} /></dd>
               </div>
             ))}
           </dl>

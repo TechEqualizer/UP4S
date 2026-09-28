@@ -77,6 +77,8 @@ Build from `src/components/site/ui.jsx`; don't hand-roll headings, bands or butt
 - Icons sit in a tinted tile (`bg-blue-50 text-blue-600 ring-1 ring-blue-100`), never a rainbow
   of gradient squares.
 - Gallery tiles use `MediaCard` / `MediaLightbox` from `components/gallery/MediaCard.jsx`.
+- Impact numbers use `CountUp` (`components/site/CountUp.jsx`): counts once when scrolled into
+  view, staggered by `delay`; years pass `from` (e.g. 2000) so they don't count from 0.
 - Feedback is `toast` from sonner, never `alert()`.
 - Respect `prefers-reduced-motion` for slideshows and animations.
 
