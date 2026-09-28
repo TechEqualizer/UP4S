@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/index.ts";
 import { NewsletterSubscriber } from "@/api/entities";
 import { Heart, Menu, X, Mail, Phone, MapPin } from "lucide-react";
-import DonationModal from "../components/donation/DonationModal";
+import DonationModal from "@/components/donation/DonationModal";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();

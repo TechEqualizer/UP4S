@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Edit, Trash2, Play } from 'lucide-react';
-import { getVideoThumbnail } from '../gallery/VideoEmbed';
+import { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
 
 export default function GalleryReorderList({ items, onReorder, onEdit, onDelete }) {
   const getDisplayImage = (item) => {

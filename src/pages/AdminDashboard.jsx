@@ -15,6 +15,10 @@ import { format } from 'date-fns';
 import GalleryForm from "@/components/admin/GalleryForm";
 import { Progress } from '@/components/ui/progress';
 import { getVideoThumbnail } from "@/components/gallery/VideoEmbed";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import GalleryReorderList from '@/components/admin/GalleryReorderList';
+import ReferralDetailModal from '@/components/admin/ReferralDetailModal';
+import EventForm from '@/components/admin/EventForm';
 import {
   Select,
   SelectContent,

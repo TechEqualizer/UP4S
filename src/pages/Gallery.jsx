@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import VideoEmbed, { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
 import { Play, Heart, User, X } from 'lucide-react';
 
 export default function Gallery() {
