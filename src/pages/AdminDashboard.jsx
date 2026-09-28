@@ -1,43 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { Donation } from '@/api/entities';
-import { KidReferral } from '@/api/entities';
-import { GalleryItem } from '@/api/entities';
-import { NewsletterSubscriber } from '@/api/entities';
-import { FundraisingCampaign } from '@/api/entities';
-import { FundraisingEvent } from '@/api/entities';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Donation, KidReferral, GalleryItem, NewsletterSubscriber, FundraisingEvent } from '@/api/entities';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, Users, Camera, Mail, TrendingUp, Download, Eye, Plus, Edit, Trash2, Settings, Play, Target, Calendar, MapPin } from 'lucide-react';
-import { format } from 'date-fns';
-import GalleryForm from "@/components/admin/GalleryForm";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { getVideoThumbnail } from "@/components/gallery/VideoEmbed";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import SmartImage from '@/components/ui/smart-image';
+import {
+  DollarSign, Users, Camera, Mail, Download, Eye, Plus, Edit, Trash2, Play, Target,
+  Calendar, MapPin, CalendarDays, Heart, ExternalLink, LayoutGrid, ListOrdered, RefreshCw, Star, Paperclip,
+} from 'lucide-react';
+import { format, isThisMonth } from 'date-fns';
+import GalleryForm from '@/components/admin/GalleryForm';
 import GalleryReorderList from '@/components/admin/GalleryReorderList';
 import ReferralDetailModal from '@/components/admin/ReferralDetailModal';
 import EventForm from '@/components/admin/EventForm';
+import { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
+import { formatCurrency } from '@/lib/utils';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+  StatCard, SectionHeader, SearchInput, EmptyState, StatusBadge, Pagination, usePagination,
+  downloadCsv, matchesSearch, PAYMENT_TONES, REFERRAL_STATUS_TONES, URGENCY_TONES,
+} from '@/components/admin/dashboard-ui';
+
+const TABS = ['referrals', 'donations', 'events', 'gallery', 'subscribers'];
+const MAX_ROWS = 1000;
+
+function formatDate(value, pattern = 'MMM d, yyyy') {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : format(date, pattern);
+}
+
+const amountOf = (donation) => Number(donation.amount) || 0;
 
 export default function AdminDashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'referrals';
+  const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
+
   const [donations, setDonations] = useState([]);
   const [referrals, setReferrals] = useState([]);
   const [gallery, setGallery] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
-  // Form states
+  // Forms
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [isSubmittingEvent, setIsSubmittingEvent] = useState(false);
@@ -45,13 +57,16 @@ export default function AdminDashboard() {
   const [editingGalleryItem, setEditingGalleryItem] = useState(null);
   const [galleryViewMode, setGalleryViewMode] = useState('grid');
 
-  // Referral management states
+  // Referrals
   const [selectedReferral, setSelectedReferral] = useState(null);
-  const [showReferralModal, setShowReferralModal] = useState(false);
-  const [referralFilters, setReferralFilters] = useState({
-    status: 'all',
-    urgency: 'all'
-  });
+  const [referralSearch, setReferralSearch] = useState('');
+  const [referralStatus, setReferralStatus] = useState('open');
+  const [referralUrgency, setReferralUrgency] = useState('all');
+
+  // Donations / subscribers
+  const [donationSearch, setDonationSearch] = useState('');
+  const [donationStatus, setDonationStatus] = useState('all');
+  const [subscriberSearch, setSubscriberSearch] = useState('');
 
   useEffect(() => {
     loadDashboardData();
@@ -59,88 +74,85 @@ export default function AdminDashboard() {
 
   const loadDashboardData = async () => {
     setIsLoading(true);
+    setLoadError('');
     try {
-      const [donationsData, referralsData, galleryData, subscribersData, campaignsData, eventsData] = await Promise.all([
-        Donation.list('-created_date', 50),
-        KidReferral.list('-created_date', 50),
-        GalleryItem.list('display_order', 100), 
-        NewsletterSubscriber.list('-created_date', 50),
-        FundraisingCampaign.list('-created_date', 50),
-        FundraisingEvent.list('-created_date', 50)
+      const [donationsData, referralsData, galleryData, subscribersData, eventsData] = await Promise.all([
+        Donation.list('-created_date', MAX_ROWS),
+        KidReferral.list('-created_date', MAX_ROWS),
+        GalleryItem.list('display_order', MAX_ROWS),
+        NewsletterSubscriber.list('-created_date', MAX_ROWS),
+        FundraisingEvent.list('-event_date', MAX_ROWS),
       ]);
-      
       setDonations(donationsData);
       setReferrals(referralsData);
-      setGallery(galleryData);
+      // Same order as the public gallery: display_order, then newest first
+      setGallery([...galleryData].sort(
+        (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || new Date(b.created_date) - new Date(a.created_date)
+      ));
       setSubscribers(subscribersData);
-      setCampaigns(campaignsData);
       setEvents(eventsData);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      setLoadError(error?.message || 'Could not load dashboard data.');
     }
     setIsLoading(false);
   };
 
-  const totalDonations = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
-  const monthlyDonations = donations.filter(d => {
-    const donationDate = new Date(d.created_date);
-    const now = new Date();
-    return donationDate.getMonth() === now.getMonth() && donationDate.getFullYear() === now.getFullYear();
-  }).reduce((sum, d) => sum + (d.amount || 0), 0);
+  // ---------------------------------------------------------------------------
+  // Derived data
+  // ---------------------------------------------------------------------------
 
-  const stats = [
-    {
-      title: "Total Donations",
-      value: `$${totalDonations.toLocaleString()}`,
-      icon: DollarSign,
-      color: "text-green-600",
-      change: "+12.5%"
-    },
-    {
-      title: "Active Referrals",
-      value: referrals.filter(r => r.status !== 'completed').length,
-      icon: Users,
-      color: "text-blue-600",
-      change: "+8.2%"
-    },
-    {
-      title: "Gallery Items",
-      value: gallery.length,
-      icon: Camera,
-      color: "text-purple-600",
-      change: "+15.3%"
-    },
-    {
-      title: "Newsletter Subscribers",
-      value: subscribers.length,
-      icon: Mail,
-      color: "text-orange-600",
-      change: "+22.1%"
-    },
-    {
-      title: "Active Campaigns",
-      value: campaigns.filter(c => c.is_active).length,
-      icon: Target,
-      color: "text-indigo-600",
-      change: "+2"
-    }
-  ];
+  const eventTitles = useMemo(() => Object.fromEntries(events.map((e) => [e.id, e.title])), [events]);
+  const completedDonations = donations.filter((d) => d.payment_status === 'completed');
+  const raisedAllTime = completedDonations.reduce((sum, d) => sum + amountOf(d), 0);
+  const thisMonth = completedDonations.filter((d) => d.created_date && isThisMonth(new Date(d.created_date)));
+  const raisedThisMonth = thisMonth.reduce((sum, d) => sum + amountOf(d), 0);
+  const openReferrals = referrals.filter((r) => ['pending', 'reviewing'].includes(r.status));
+  const pendingReferrals = referrals.filter((r) => r.status === 'pending');
+  const now = new Date();
+  const upcomingEvents = events
+    .filter((e) => e.is_active && e.event_date && new Date(e.event_date) >= now)
+    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+  const activeSubscribers = subscribers.filter((s) => s.is_active);
 
-  // Event Handlers
+  const filteredReferrals = referrals.filter((r) => {
+    const statusMatch =
+      referralStatus === 'all' ||
+      (referralStatus === 'open' ? ['pending', 'reviewing'].includes(r.status) : r.status === referralStatus);
+    const urgencyMatch = referralUrgency === 'all' || r.urgency_level === referralUrgency;
+    return statusMatch && urgencyMatch &&
+      matchesSearch(referralSearch, r.child_name, r.guardian_name, r.guardian_email, r.guardian_phone, r.wish_description);
+  });
+  const filteredDonations = donations.filter((d) =>
+    (donationStatus === 'all' || d.payment_status === donationStatus) &&
+    matchesSearch(donationSearch, d.donor_name, d.donor_email, eventTitles[d.event_id])
+  );
+  const filteredSubscribers = subscribers.filter((s) => matchesSearch(subscriberSearch, s.email, s.first_name));
+
+  const referralPages = usePagination(filteredReferrals, 25, `${referralSearch}|${referralStatus}|${referralUrgency}`);
+  const donationPages = usePagination(filteredDonations, 25, `${donationSearch}|${donationStatus}`);
+  const subscriberPages = usePagination(filteredSubscribers, 50, subscriberSearch);
+
+  // ---------------------------------------------------------------------------
+  // Events
+  // ---------------------------------------------------------------------------
+
   const handleEventSubmit = async (eventData) => {
     setIsSubmittingEvent(true);
     try {
       if (editingEvent) {
         await FundraisingEvent.update(editingEvent.id, eventData);
+        toast.success('Event updated');
       } else {
         await FundraisingEvent.create(eventData);
+        toast.success('Event created');
       }
       setShowEventForm(false);
       setEditingEvent(null);
       loadDashboardData();
     } catch (error) {
-      alert('Error saving event. Please check the console for details.');
       console.error('Error saving event:', error);
+      toast.error('Could not save the event', { description: error?.message });
     } finally {
       setIsSubmittingEvent(false);
     }
@@ -149,52 +161,69 @@ export default function AdminDashboard() {
   const handleEditEvent = (event) => {
     setEditingEvent(event);
     setShowEventForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteEvent = async (event) => {
-    if (confirm(`Are you sure you want to delete the event "${event.title}"?`)) {
-      try {
-        await FundraisingEvent.delete(event.id);
-        loadDashboardData();
-      } catch (error) {
-        alert('Error deleting event. Please try again.');
-        console.error('Error deleting event:', error);
-      }
+    if (!confirm(`Delete the event "${event.title}"? This can't be undone.`)) return;
+    try {
+      await FundraisingEvent.delete(event.id);
+      toast.success('Event deleted');
+      loadDashboardData();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error('Could not delete the event', { description: error?.message });
     }
   };
 
-  // Gallery Handlers
+  // ---------------------------------------------------------------------------
+  // Gallery
+  // ---------------------------------------------------------------------------
+
   const handleGallerySubmit = async (itemData) => {
     try {
       if (editingGalleryItem) {
         await GalleryItem.update(editingGalleryItem.id, itemData);
+        toast.success('Gallery item updated');
       } else {
-        const newDisplayOrder = gallery.length > 0 ? Math.max(...gallery.map(item => item.display_order || 0)) + 1 : 0;
+        const newDisplayOrder = gallery.length > 0 ? Math.max(...gallery.map((item) => item.display_order || 0)) + 1 : 0;
         await GalleryItem.create({ ...itemData, display_order: newDisplayOrder });
+        toast.success('Gallery item added');
       }
       setShowGalleryForm(false);
       setEditingGalleryItem(null);
       loadDashboardData();
     } catch (error) {
-      alert('Error saving gallery item. Please try again.');
       console.error('Error saving gallery item:', error);
+      toast.error('Could not save the gallery item', { description: error?.message });
     }
   };
 
   const handleEditGalleryItem = (item) => {
     setEditingGalleryItem(item);
     setShowGalleryForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteGalleryItem = async (item) => {
-    if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
-      try {
-        await GalleryItem.delete(item.id);
-        loadDashboardData();
-      } catch (error) {
-        alert('Error deleting gallery item. Please try again.');
-        console.error('Error deleting gallery item:', error);
-      }
+    if (!confirm(`Delete "${item.title}" from the gallery? This can't be undone.`)) return;
+    try {
+      await GalleryItem.delete(item.id);
+      toast.success('Gallery item deleted');
+      loadDashboardData();
+    } catch (error) {
+      console.error('Error deleting gallery item:', error);
+      toast.error('Could not delete the gallery item', { description: error?.message });
+    }
+  };
+
+  const handleToggleFeatured = async (item) => {
+    try {
+      await GalleryItem.update(item.id, { is_featured: !item.is_featured });
+      setGallery((prev) => prev.map((g) => (g.id === item.id ? { ...g, is_featured: !item.is_featured } : g)));
+      toast.success(item.is_featured ? 'Removed from homepage' : 'Featured on homepage');
+    } catch (error) {
+      toast.error('Could not update the item', { description: error?.message });
     }
   };
 
@@ -202,24 +231,20 @@ export default function AdminDashboard() {
     const reorderedItems = Array.from(gallery);
     const [movedItem] = reorderedItems.splice(sourceIndex, 1);
     reorderedItems.splice(destinationIndex, 0, movedItem);
-
     setGallery(reorderedItems);
 
-    const updatePromises = reorderedItems.map((item, index) => {
-      if (item.display_order !== index) {
-        return GalleryItem.update(item.id, { display_order: index });
-      }
-      return Promise.resolve();
-    });
-
     try {
-      await Promise.all(updatePromises);
-      loadDashboardData(); 
+      await Promise.all(
+        reorderedItems.map((item, index) =>
+          item.display_order !== index ? GalleryItem.update(item.id, { display_order: index }) : null
+        )
+      );
+      toast.success('Gallery order saved');
     } catch (error) {
-      alert('Error reordering items. Please try again.');
       console.error('Error reordering gallery items:', error);
-      loadDashboardData(); 
+      toast.error('Could not save the new order', { description: error?.message });
     }
+    loadDashboardData();
   };
 
   const getDisplayImage = (item) => {
@@ -230,211 +255,168 @@ export default function AdminDashboard() {
     return item.media_url;
   };
 
-  const handleViewReferral = (referral) => {
-    setSelectedReferral(referral);
-    setShowReferralModal(true);
+  // ---------------------------------------------------------------------------
+  // Exports
+  // ---------------------------------------------------------------------------
+
+  const exportDonations = () =>
+    downloadCsv('donations', [
+      { label: 'Date', value: (d) => formatDate(d.created_date, 'yyyy-MM-dd HH:mm') },
+      { label: 'Donor', value: (d) => d.donor_name },
+      { label: 'Email', value: (d) => d.donor_email },
+      { label: 'Amount', value: (d) => amountOf(d).toFixed(2) },
+      { label: 'Type', value: (d) => d.donation_type },
+      { label: 'For', value: (d) => eventTitles[d.event_id] || 'General fund' },
+      { label: 'Status', value: (d) => d.payment_status },
+      { label: 'Anonymous', value: (d) => (d.is_anonymous ? 'Yes' : 'No') },
+      { label: 'Dedication', value: (d) => d.dedication_message },
+      { label: 'Stripe session', value: (d) => d.stripe_session_id },
+    ], filteredDonations);
+
+  const exportReferrals = () =>
+    downloadCsv('referrals', [
+      { label: 'Submitted', value: (r) => formatDate(r.created_date, 'yyyy-MM-dd HH:mm') },
+      { label: 'Child', value: (r) => r.child_name },
+      { label: 'Age', value: (r) => r.child_age },
+      { label: 'Guardian', value: (r) => r.guardian_name },
+      { label: 'Guardian email', value: (r) => r.guardian_email },
+      { label: 'Guardian phone', value: (r) => r.guardian_phone },
+      { label: 'Wish', value: (r) => r.wish_description },
+      { label: 'Heard about us', value: (r) => r.referral_source },
+      { label: 'Urgency', value: (r) => r.urgency_level },
+      { label: 'Status', value: (r) => r.status },
+      { label: 'Follow-up date', value: (r) => r.follow_up_date },
+      { label: 'Admin notes', value: (r) => r.admin_notes },
+      { label: 'Attachments', value: (r) => (r.uploaded_files || []).length },
+    ], filteredReferrals);
+
+  const exportSubscribers = () =>
+    downloadCsv('newsletter-subscribers', [
+      { label: 'Email', value: (s) => s.email },
+      { label: 'First name', value: (s) => s.first_name },
+      { label: 'Source', value: (s) => s.subscription_source },
+      { label: 'Active', value: (s) => (s.is_active ? 'Yes' : 'No') },
+      { label: 'Subscribed', value: (s) => formatDate(s.created_date, 'yyyy-MM-dd') },
+    ], filteredSubscribers);
+
+  // ---------------------------------------------------------------------------
+
+  const tabCounts = {
+    referrals: openReferrals.length,
+    donations: donations.length,
+    events: events.length,
+    gallery: gallery.length,
+    subscribers: activeSubscribers.length,
   };
-
-  const handleUpdateReferral = () => {
-    loadDashboardData();
-    setShowReferralModal(false);
-    setSelectedReferral(null);
-  };
-
-  const filteredReferrals = referrals.filter(referral => {
-    const statusMatch = referralFilters.status === 'all' || referral.status === referralFilters.status;
-    const urgencyMatch = referralFilters.urgency === 'all' || referral.urgency_level === referralFilters.urgency;
-    return statusMatch && urgencyMatch;
-  });
-
-  const getStatusTooltip = (status) => {
-    const tooltips = {
-      pending: 'Initial submission - Needs admin review',
-      reviewing: 'Team is evaluating - Under active consideration',  
-      approved: 'Accepted for program - Moving to production phase',
-      completed: 'Child\'s wish fulfilled - Project successfully completed',
-      declined: 'Not suitable for program - Application rejected'
-    };
-    return tooltips[status] || status;
-  };
-
-  const getUrgencyTooltip = (urgency) => {
-    const tooltips = {
-      low: 'Low Priority - Standard processing timeline',
-      medium: 'Medium Priority - Moderate urgency for completion',
-      high: 'High Priority - Expedited processing needed',
-      critical: 'Critical Priority - Immediate attention required'
-    };
-    return tooltips[urgency] || urgency;
-  };
-
-  const exportData = (data, filename) => {
-    const csv = [
-      Object.keys(data[0] || {}),
-      ...data.map(row => Object.values(row))
-    ].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${filename}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const tabLabels = { referrals: 'Referrals', donations: 'Donations', events: 'Events', gallery: 'Gallery', subscribers: 'Subscribers' };
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 px-4 py-8 sm:px-8">
+      <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Monitor and manage UP4S activities</p>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="mt-1 text-gray-600">Referrals, donations and site content for Team UP4S</p>
+          </div>
+          <Button variant="outline" onClick={loadDashboardData} disabled={isLoading} className="self-start sm:self-auto">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={stat.title} className="relative overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-2xl font-bold text-gray-900 mb-1">
-                  {stat.value}
-                </div>
-                <div className="flex items-center text-sm">
-                  <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-green-500 font-medium">{stat.change}</span>
-                  <span className="text-gray-500 ml-1">from last month</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        {loadError && (
+          <div role="alert" className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            Couldn&apos;t load dashboard data: {loadError}
+          </div>
+        )}
+
+        {/* Stats */}
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+          <StatCard
+            label="Raised, all time"
+            value={isLoading ? '—' : formatCurrency(raisedAllTime)}
+            detail={`${completedDonations.length} completed donations`}
+            icon={DollarSign}
+            accent="text-green-600 bg-green-50"
+            onClick={() => { setDonationStatus('completed'); setActiveTab('donations'); }}
+          />
+          <StatCard
+            label="This month"
+            value={isLoading ? '—' : formatCurrency(raisedThisMonth)}
+            detail={`${thisMonth.length} donation${thisMonth.length === 1 ? '' : 's'} in ${format(now, 'MMMM')}`}
+            icon={Heart}
+            accent="text-red-600 bg-red-50"
+          />
+          <StatCard
+            label="To review"
+            value={isLoading ? '—' : openReferrals.length}
+            detail={`${pendingReferrals.length} new, ${openReferrals.length - pendingReferrals.length} in review`}
+            icon={Users}
+            accent="text-blue-600 bg-blue-50"
+            onClick={() => { setReferralStatus('open'); setActiveTab('referrals'); }}
+          />
+          <StatCard
+            label="Upcoming events"
+            value={isLoading ? '—' : upcomingEvents.length}
+            detail={upcomingEvents[0] ? `Next: ${upcomingEvents[0].title} · ${formatDate(upcomingEvents[0].event_date, 'MMM d')}` : 'None scheduled'}
+            icon={CalendarDays}
+            accent="text-purple-600 bg-purple-50"
+            onClick={() => setActiveTab('events')}
+          />
+          <StatCard
+            label="Subscribers"
+            value={isLoading ? '—' : activeSubscribers.length}
+            detail={subscribers.length > activeSubscribers.length ? `${subscribers.length - activeSubscribers.length} unsubscribed` : 'All active'}
+            icon={Mail}
+            accent="text-orange-600 bg-orange-50"
+            onClick={() => setActiveTab('subscribers')}
+            className="col-span-2 lg:col-span-1"
+          />
         </div>
 
-        {/* Data Tables */}
-        <Tabs defaultValue="donations" className="space-y-6">
-          <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="bg-white p-1 min-w-max">
-              <TabsTrigger value="donations" className="px-4">Donations</TabsTrigger>
-              <TabsTrigger value="referrals" className="px-4">Referrals</TabsTrigger>
-              <TabsTrigger value="events" className="px-4">Events</TabsTrigger>
-              <TabsTrigger value="gallery" className="px-4">Gallery</TabsTrigger>
-              <TabsTrigger value="subscribers" className="px-4">Subscribers</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            <TabsList className="h-auto min-w-max bg-white p-1 shadow-sm ring-1 ring-gray-200">
+              {TABS.map((tab) => (
+                <TabsTrigger
+                  key={tab}
+                  value={tab}
+                  className="gap-2 px-4 py-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
+                >
+                  {tabLabels[tab]}
+                  <span className="rounded-full bg-black/10 px-1.5 text-xs tabular-nums">{isLoading ? '·' : tabCounts[tab]}</span>
+                </TabsTrigger>
+              ))}
             </TabsList>
           </div>
 
-          {/* Donations Tab */}
-          <TabsContent value="donations">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Recent Donations</CardTitle>
-                    <p className="text-gray-600">This month: ${monthlyDonations.toLocaleString()}</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => exportData(donations, 'donations')}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Export
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Donor</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Designation</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {donations.slice(0, 10).map((donation) => (
-                        <TableRow key={donation.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{donation.donor_name}</p>
-                              <p className="text-sm text-gray-500">{donation.donor_email}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            ${donation.amount?.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={donation.donation_type === 'monthly' ? 'default' : 'secondary'}>
-                              {donation.donation_type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="capitalize">
-                            {donation.fund_designation?.replace('-', ' ')}
-                          </TableCell>
-                          <TableCell>
-                            {format(new Date(donation.created_date), 'MMM d, yyyy')}
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant="outline"
-                              className={donation.payment_status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' : ''}
-                            >
-                              {donation.payment_status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Referrals Tab */}
+          {/* Referrals */}
           <TabsContent value="referrals">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Kid Referrals</CardTitle>
-                    <p className="text-gray-600 mt-1">
-                      {referrals.length} total referrals • {referrals.filter(r => r.status === 'pending').length} pending review
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => exportData(referrals, 'referrals')}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Export
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4 mb-6">
-                  <Select
-                    value={referralFilters.status}
-                    onValueChange={(value) => setReferralFilters(prev => ({ ...prev, status: value }))}
-                  >
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
+            <SectionHeader
+              title="Kid referrals"
+              description={`${referrals.length} total · ${pendingReferrals.length} new since last review`}
+            >
+              <Button variant="outline" onClick={exportReferrals} disabled={filteredReferrals.length === 0}>
+                <Download className="mr-2 h-4 w-4" /> Export CSV
+              </Button>
+            </SectionHeader>
+
+            <Card className="overflow-hidden">
+              <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center">
+                <SearchInput
+                  value={referralSearch}
+                  onChange={setReferralSearch}
+                  placeholder="Search child, guardian, email or wish"
+                  label="Search referrals"
+                  className="sm:max-w-sm sm:flex-1"
+                />
+                <div className="flex gap-3">
+                  <Select value={referralStatus} onValueChange={setReferralStatus}>
+                    <SelectTrigger className="w-40" aria-label="Filter by status"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="open">Needs review</SelectItem>
+                      <SelectItem value="all">All statuses</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="reviewing">Reviewing</SelectItem>
                       <SelectItem value="approved">Approved</SelectItem>
@@ -442,121 +424,86 @@ export default function AdminDashboard() {
                       <SelectItem value="declined">Declined</SelectItem>
                     </SelectContent>
                   </Select>
-
-                  <Select
-                    value={referralFilters.urgency}
-                    onValueChange={(value) => setReferralFilters(prev => ({ ...prev, urgency: value }))}
-                  >
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Filter by urgency" />
-                    </SelectTrigger>
+                  <Select value={referralUrgency} onValueChange={setReferralUrgency}>
+                    <SelectTrigger className="w-36" aria-label="Filter by urgency"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Urgency</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="all">Any urgency</SelectItem>
                       <SelectItem value="critical">Critical</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
 
-                <TooltipProvider>
+              {filteredReferrals.length === 0 ? (
+                <div className="p-6">
+                  <EmptyState
+                    icon={Users}
+                    title={referrals.length === 0 ? 'No referrals yet' : 'No referrals match'}
+                    description={referrals.length === 0
+                      ? 'Referrals submitted through the Refer a Kid form will appear here.'
+                      : 'Try a different search or filter.'}
+                  />
+                </div>
+              ) : (
+                <>
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
+                        <TableRow className="bg-gray-50/80">
                           <TableHead>Child</TableHead>
                           <TableHead>Guardian</TableHead>
-                          <TableHead>Wish Summary</TableHead>
+                          <TableHead className="min-w-[16rem]">Wish</TableHead>
                           <TableHead>Urgency</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Submitted</TableHead>
-                          <TableHead>Actions</TableHead>
+                          <TableHead className="text-right"><span className="sr-only">Actions</span></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredReferrals.map((referral) => (
-                          <TableRow key={referral.id} className="hover:bg-gray-50">
+                        {referralPages.pageItems.map((referral) => (
+                          <TableRow
+                            key={referral.id}
+                            className="cursor-pointer hover:bg-blue-50/40"
+                            onClick={() => setSelectedReferral(referral)}
+                          >
                             <TableCell>
-                              <div>
-                                <p className="font-medium">{referral.child_name}</p>
-                                <p className="text-sm text-gray-500">Age {referral.child_age}</p>
-                              </div>
+                              <p className="font-medium text-gray-900">{referral.child_name}</p>
+                              {referral.child_age != null && <p className="text-sm text-gray-500">Age {referral.child_age}</p>}
                             </TableCell>
                             <TableCell>
-                              <div>
-                                <p className="font-medium">{referral.guardian_name}</p>
-                                <p className="text-sm text-gray-500">{referral.guardian_email}</p>
-                                {referral.guardian_phone && (
-                                  <p className="text-sm text-gray-500">{referral.guardian_phone}</p>
-                                )}
-                              </div>
+                              <p className="font-medium text-gray-900">{referral.guardian_name}</p>
+                              <p className="text-sm text-gray-500">{referral.guardian_email}</p>
+                              {referral.guardian_phone && <p className="text-sm text-gray-500">{referral.guardian_phone}</p>}
                             </TableCell>
                             <TableCell>
-                              <p className="text-sm line-clamp-3 max-w-xs">
-                                {referral.wish_description}
-                              </p>
-                              {referral.uploaded_files && referral.uploaded_files.length > 0 && (
-                                <Badge variant="outline" className="text-xs mt-1">
-                                  {referral.uploaded_files.length} files
-                                </Badge>
+                              <p className="max-w-md text-sm text-gray-700 line-clamp-2">{referral.wish_description}</p>
+                              {referral.uploaded_files?.length > 0 && (
+                                <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                                  <Paperclip className="h-3 w-3" aria-hidden="true" />
+                                  {referral.uploaded_files.length} attachment{referral.uploaded_files.length === 1 ? '' : 's'}
+                                </p>
                               )}
                             </TableCell>
                             <TableCell>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge 
-                                    variant="outline"
-                                    className={
-                                      referral.urgency_level === 'critical' ? 'border-red-500 text-red-700 bg-red-50 cursor-help' :
-                                      referral.urgency_level === 'high' ? 'border-orange-500 text-orange-700 bg-orange-50 cursor-help' :
-                                      referral.urgency_level === 'medium' ? 'border-yellow-500 text-yellow-700 bg-yellow-50 cursor-help' :
-                                      'border-gray-300 text-gray-700 bg-gray-50 cursor-help'
-                                    }
-                                  >
-                                    {referral.urgency_level}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="font-medium">{getUrgencyTooltip(referral.urgency_level)}</p>
-                                </TooltipContent>
-                              </Tooltip>
+                              <StatusBadge tone={URGENCY_TONES[referral.urgency_level]}>{referral.urgency_level}</StatusBadge>
                             </TableCell>
                             <TableCell>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge 
-                                    variant="outline"
-                                    className={
-                                      referral.status === 'completed' ? 'border-green-500 text-green-700 bg-green-50 cursor-help' :
-                                      referral.status === 'approved' ? 'border-blue-500 text-blue-700 bg-blue-50 cursor-help' :
-                                      referral.status === 'reviewing' ? 'border-purple-500 text-purple-700 bg-purple-50 cursor-help' :
-                                      referral.status === 'declined' ? 'border-red-500 text-red-700 bg-red-50 cursor-help' :
-                                      'border-gray-300 text-gray-700 bg-gray-50 cursor-help'
-                                    }
-                                  >
-                                    {referral.status}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="font-medium">{getStatusTooltip(referral.status)}</p>
-                                </TooltipContent>
-                              </Tooltip>
+                              <StatusBadge tone={REFERRAL_STATUS_TONES[referral.status]}>{referral.status}</StatusBadge>
                             </TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                <p>{format(new Date(referral.created_date), 'MMM d, yyyy')}</p>
-                                <p className="text-gray-500">{format(new Date(referral.created_date), 'h:mm a')}</p>
-                              </div>
+                            <TableCell className="whitespace-nowrap text-sm text-gray-600">
+                              {formatDate(referral.created_date)}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="text-right">
                               <Button
                                 size="sm"
-                                onClick={() => handleViewReferral(referral)}
-                                className="bg-blue-600 hover:bg-blue-700"
+                                variant="outline"
+                                onClick={(e) => { e.stopPropagation(); setSelectedReferral(referral); }}
+                                aria-label={`Open referral for ${referral.child_name}`}
                               >
-                                <Eye className="w-4 h-4 mr-1" />
-                                View
+                                <Eye className="mr-1 h-4 w-4" /> Open
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -564,142 +511,209 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
-                </TooltipProvider>
-
-                {filteredReferrals.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    No referrals match the current filters.
-                  </div>
-                )}
-              </CardContent>
+                  <Pagination {...referralPages} />
+                </>
+              )}
             </Card>
           </TabsContent>
 
-          {/* Events Tab */}
-          <TabsContent value="events">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                  <CardTitle>Fundraising Events</CardTitle>
-                  <p className="text-gray-600 mt-1">
-                    Manage your fundraising events.
+          {/* Donations */}
+          <TabsContent value="donations">
+            <SectionHeader
+              title="Donations"
+              description={`${formatCurrency(raisedAllTime)} raised from ${completedDonations.length} completed donations`}
+            >
+              <Button variant="outline" onClick={exportDonations} disabled={filteredDonations.length === 0}>
+                <Download className="mr-2 h-4 w-4" /> Export CSV
+              </Button>
+            </SectionHeader>
+
+            <Card className="overflow-hidden">
+              <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center">
+                <SearchInput
+                  value={donationSearch}
+                  onChange={setDonationSearch}
+                  placeholder="Search donor, email or event"
+                  label="Search donations"
+                  className="sm:max-w-sm sm:flex-1"
+                />
+                <Select value={donationStatus} onValueChange={setDonationStatus}>
+                  <SelectTrigger className="w-40" aria-label="Filter by payment status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+                {donationStatus === 'pending' && (
+                  <p className="text-xs text-gray-500 sm:ml-auto sm:max-w-xs">
+                    Pending = checkout started but Stripe hasn&apos;t confirmed payment.
                   </p>
+                )}
+              </div>
+
+              {filteredDonations.length === 0 ? (
+                <div className="p-6">
+                  <EmptyState
+                    icon={DollarSign}
+                    title={donations.length === 0 ? 'No donations yet' : 'No donations match'}
+                    description={donations.length === 0 ? 'Donations made through the site will appear here.' : 'Try a different search or filter.'}
+                  />
                 </div>
-                <Button
-                  onClick={() => { setEditingEvent(null); setShowEventForm(true); }}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Event
-                </Button>
-            </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50/80">
+                          <TableHead className="min-w-[14rem]">Donor</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead className="min-w-[12rem]">For</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {donationPages.pageItems.map((donation) => (
+                          <TableRow key={donation.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-gray-900">{donation.donor_name || '—'}</p>
+                                {donation.is_anonymous && <StatusBadge tone="gray" title="Asked not to be named publicly">Anonymous</StatusBadge>}
+                              </div>
+                              <p className="text-sm text-gray-500">{donation.donor_email}</p>
+                              {donation.dedication_message && (
+                                <p className="mt-0.5 text-xs italic text-gray-500">In honor of {donation.dedication_message}</p>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <p className="font-semibold tabular-nums text-gray-900">{formatCurrency(amountOf(donation))}</p>
+                              {donation.donation_type === 'monthly' && <p className="text-xs text-gray-500">monthly</p>}
+                            </TableCell>
+                            <TableCell className="text-sm text-gray-700">
+                              {eventTitles[donation.event_id] || <span className="text-gray-500">General fund</span>}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-sm text-gray-600">{formatDate(donation.created_date)}</TableCell>
+                            <TableCell>
+                              <StatusBadge tone={PAYMENT_TONES[donation.payment_status]}>{donation.payment_status}</StatusBadge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <Pagination {...donationPages} />
+                </>
+              )}
+            </Card>
+          </TabsContent>
+
+          {/* Events */}
+          <TabsContent value="events">
+            <SectionHeader title="Fundraising events" description="Events appear on the Support Us page.">
+              <Button onClick={() => { setEditingEvent(null); setShowEventForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="mr-2 h-4 w-4" /> Add event
+              </Button>
+            </SectionHeader>
 
             {showEventForm && (
-              <EventForm 
+              <EventForm
                 event={editingEvent}
                 onSubmit={handleEventSubmit}
                 onCancel={() => { setShowEventForm(false); setEditingEvent(null); }}
                 isSubmitting={isSubmittingEvent}
               />
             )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map((event) => {
-                const progressPercentage = event.fundraising_goal > 0 ? Math.min(((event.amount_raised || 0) / event.fundraising_goal) * 100, 100) : 0;
-                return (
-                  <Card key={event.id} className="flex flex-col">
-                    <div className="aspect-video relative overflow-hidden">
-                      <img src={event.image_url} alt={event.title} className="w-full h-full object-cover rounded-t-lg" />
-                      <Badge className={`absolute top-2 left-2 ${event.is_active ? 'bg-green-500' : 'bg-gray-500'} text-white`}>
-                        {event.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
-                    <CardHeader>
-                      <CardTitle>{event.title}</CardTitle>
-                      <div className="flex items-center text-sm text-gray-500 gap-4">
-                        <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {format(new Date(event.event_date), 'MMM d, yyyy')}</span>
-                        <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {event.location}</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex flex-col">
-                      <p className="text-sm text-gray-600 mb-4 flex-grow">{event.description}</p>
-                      <div>
-                        <div className="flex justify-between items-center text-sm mb-1">
-                          <span className="text-gray-600">Raised</span>
-                          <span className="font-medium">${(event.amount_raised || 0).toLocaleString()} / ${event.fundraising_goal.toLocaleString()}</span>
+
+            {events.length === 0 && !showEventForm ? (
+              <EmptyState icon={Target} title="No events yet" description="Add a fundraising event to show it on the Support Us page.">
+                <Button onClick={() => setShowEventForm(true)}><Plus className="mr-2 h-4 w-4" /> Add your first event</Button>
+              </EmptyState>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {events.map((event) => {
+                  const goal = Number(event.fundraising_goal) || 0;
+                  const raised = Number(event.amount_raised) || 0;
+                  const pct = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
+                  const isPast = event.event_date && new Date(event.event_date) < now;
+                  const donationCount = completedDonations.filter((d) => d.event_id === event.id).length;
+                  return (
+                    <Card key={event.id} className="flex flex-col overflow-hidden">
+                      <div className="relative aspect-video">
+                        <SmartImage src={event.image_url} alt="" className="h-full w-full object-cover" />
+                        <div className="absolute left-3 top-3 flex gap-1.5">
+                          <StatusBadge tone={event.is_active ? 'green' : 'gray'}>{event.is_active ? 'Active' : 'Hidden'}</StatusBadge>
+                          {isPast && <StatusBadge tone="gray">Past</StatusBadge>}
                         </div>
-                        <Progress value={progressPercentage} />
                       </div>
-                    </CardContent>
-                    <div className="p-4 border-t flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEditEvent(event)}>
-                        <Edit className="w-4 h-4 mr-1" /> Edit
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDeleteEvent(event)}>
-                        <Trash2 className="w-4 h-4 mr-1" /> Delete
-                      </Button>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-            {events.length === 0 && !showEventForm && (
-              <div className="text-center py-16 border-2 border-dashed rounded-lg">
-                <Target className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Events Found</h3>
-                <p className="text-gray-500 mb-4">Get started by adding your first fundraising event.</p>
-                <Button onClick={() => setShowEventForm(true)}>
-                  <Plus className="w-4 h-4 mr-2" /> Add Your First Event
-                </Button>
+                      <div className="flex flex-1 flex-col p-5">
+                        <h3 className="font-semibold text-gray-900">{event.title}</h3>
+                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                          <span className="flex items-center gap-1"><Calendar className="h-4 w-4" aria-hidden="true" /> {formatDate(event.event_date)}</span>
+                          {event.location && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" aria-hidden="true" /> {event.location}</span>}
+                        </div>
+                        <div className="mt-4 flex-1">
+                          <div className="mb-1 flex items-baseline justify-between text-sm">
+                            <span className="font-semibold text-gray-900">{formatCurrency(raised)}</span>
+                            <span className="text-gray-500">{goal > 0 ? `of ${formatCurrency(goal)}` : 'No goal set'}</span>
+                          </div>
+                          <Progress value={pct} className="h-2" />
+                          <p className="mt-1.5 text-xs text-gray-500">
+                            {goal > 0 && `${pct.toFixed(0)}% · `}{donationCount} online donation{donationCount === 1 ? '' : 's'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 border-t border-gray-100 p-3">
+                        <Button variant="outline" size="sm" onClick={() => handleEditEvent(event)}>
+                          <Edit className="mr-1 h-4 w-4" /> Edit
+                        </Button>
+                        <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleDeleteEvent(event)}>
+                          <Trash2 className="mr-1 h-4 w-4" /> Delete
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
 
-          {/* Gallery Tab */}
+          {/* Gallery */}
           <TabsContent value="gallery">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <CardTitle>Gallery Management</CardTitle>
-                <p className="text-gray-600 mt-1">
-                  {gallery.length} total items • {gallery.filter(item => item.is_featured).length} featured
-                </p>
+            <SectionHeader
+              title="Gallery"
+              description={`${gallery.length} items · ${gallery.filter((i) => i.is_featured).length} featured on the homepage`}
+            >
+              <div className="inline-flex rounded-md border border-gray-300 bg-white p-0.5" role="group" aria-label="View">
+                {[['grid', 'Grid', LayoutGrid], ['list', 'Reorder', ListOrdered]].map(([mode, label, Icon]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    aria-pressed={galleryViewMode === mode}
+                    onClick={() => setGalleryViewMode(mode)}
+                    className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium ${
+                      galleryViewMode === mode ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" /> {label}
+                  </button>
+                ))}
               </div>
-              <div className="flex gap-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <Settings className="w-4 h-4" />
-                      View: {galleryViewMode === 'grid' ? 'Grid' : 'List (Reorder)'}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => setGalleryViewMode('grid')}>
-                      Grid View
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setGalleryViewMode('list')}>
-                      List View (Reorder)
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button
-                  variant="outline"
-                  onClick={() => window.open('/gallery', '_blank')}
-                  className="flex items-center gap-2"
-                >
-                  <Eye className="w-4 h-4" />
-                  View Public Gallery
-                </Button>
-                <Button
-                  onClick={() => { setEditingGalleryItem(null); setShowGalleryForm(true); }}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Item
-                </Button>
-              </div>
-            </div>
-            
+              <Button variant="outline" asChild>
+                <a href="/Gallery" target="_blank" rel="noreferrer">
+                  <ExternalLink className="mr-2 h-4 w-4" /> Public gallery
+                </a>
+              </Button>
+              <Button onClick={() => { setEditingGalleryItem(null); setShowGalleryForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="mr-2 h-4 w-4" /> Add item
+              </Button>
+            </SectionHeader>
+
             {showGalleryForm && (
-              <GalleryForm 
+              <GalleryForm
                 item={editingGalleryItem}
                 onSubmit={handleGallerySubmit}
                 onCancel={() => { setShowGalleryForm(false); setEditingGalleryItem(null); }}
@@ -707,217 +721,162 @@ export default function AdminDashboard() {
             )}
 
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {Array(8).fill(0).map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <div className="aspect-video bg-gray-200 rounded-t-lg"></div>
-                    <CardContent className="p-4">
-                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                    </CardContent>
-                  </Card>
+                  <div key={i} className="animate-pulse rounded-xl bg-white p-3 shadow-sm">
+                    <div className="aspect-video rounded-lg bg-gray-200" />
+                    <div className="mt-3 h-4 rounded bg-gray-200" />
+                    <div className="mt-2 h-3 w-2/3 rounded bg-gray-200" />
+                  </div>
                 ))}
               </div>
             ) : gallery.length === 0 && !showGalleryForm ? (
-              <div className="text-center py-16 border-2 border-dashed rounded-lg">
-                <Camera className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Gallery Items Found</h3>
-                <p className="text-gray-500 mb-4">Get started by adding your first gallery item.</p>
-                <Button onClick={() => setShowGalleryForm(true)}>
-                  <Plus className="w-4 h-4 mr-2" /> Add Your First Item
-                </Button>
+              <EmptyState icon={Camera} title="No gallery items yet" description="Add photos or videos to show them in the public gallery.">
+                <Button onClick={() => setShowGalleryForm(true)}><Plus className="mr-2 h-4 w-4" /> Add your first item</Button>
+              </EmptyState>
+            ) : galleryViewMode === 'list' ? (
+              <div>
+                <p className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                  Drag items to change their order in the public gallery. Items at the top appear first.
+                </p>
+                <GalleryReorderList
+                  items={gallery}
+                  onReorder={handleGalleryReorder}
+                  onEdit={handleEditGalleryItem}
+                  onDelete={handleDeleteGalleryItem}
+                  getDisplayImage={getDisplayImage}
+                />
               </div>
             ) : (
-              galleryViewMode === 'list' ? (
-                <div>
-                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                    <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                      <Settings className="w-5 h-5" /> Reorder Gallery Items
-                    </h3>
-                    <p className="text-blue-800">
-                      Drag and drop items to change their display order on the public gallery. 
-                      Items at the top will appear first.
-                    </p>
-                  </div>
-                  
-                  <GalleryReorderList
-                    items={gallery}
-                    onReorder={handleGalleryReorder}
-                    onEdit={handleEditGalleryItem}
-                    onDelete={handleDeleteGalleryItem}
-                    getDisplayImage={getDisplayImage}
-                  />
-                </div>
-              ) : (
-                <div>
-                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                        <span>Featured Items: {gallery.filter(item => item.is_featured).length}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                        <span>External URLs: {gallery.filter(item => item.is_external_url).length}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
-                        <span>Videos: {gallery.filter(item => item.media_type === 'video').length}</span>
-                      </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {gallery.map((item) => (
+                  <Card key={item.id} className="group flex flex-col overflow-hidden">
+                    <div className="relative aspect-video">
+                      <SmartImage
+                        src={getDisplayImage(item)}
+                        fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
+                        alt=""
+                        placeholderIcon={item.media_type === 'video' ? 'video' : 'image'}
+                        className="h-full w-full object-cover"
+                      />
+                      {item.media_type === 'video' && (
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/70">
+                            <Play className="ml-0.5 h-5 w-5 text-white" aria-hidden="true" />
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFeatured(item)}
+                        aria-pressed={item.is_featured}
+                        title={item.is_featured ? 'Featured on the homepage (click to remove)' : 'Feature on the homepage'}
+                        className={`absolute right-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold shadow transition ${
+                          item.is_featured ? 'bg-yellow-400 text-gray-900' : 'bg-white/90 text-gray-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
+                        }`}
+                      >
+                        <Star className={`h-3.5 w-3.5 ${item.is_featured ? 'fill-current' : ''}`} aria-hidden="true" />
+                        {item.is_featured ? 'Featured' : 'Feature'}
+                      </button>
                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {gallery.map((item) => (
-                      <Card key={item.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                        <div className="aspect-video relative overflow-hidden">
-                          <img 
-                            src={getDisplayImage(item)}
-                            alt={item.title} 
-                            className="w-full h-full object-cover rounded-t-lg"
-                            onError={(e) => {
-                              if (item.is_external_url && item.media_type === 'video') {
-                                const thumbnail = getVideoThumbnail(item.media_url);
-                                if (thumbnail?.fallback && e.target.src !== thumbnail.fallback) {
-                                  e.target.src = thumbnail.fallback;
-                                }
-                              }
-                            }}
-                          />
-                          
-                          {item.media_type === 'video' && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-12 h-12 bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center">
-                                <Play className="w-6 h-6 text-white ml-1" />
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="absolute top-2 left-2 flex gap-1">
-                            {item.is_featured && (
-                              <Badge className="bg-yellow-500 text-white text-xs">
-                                Featured
-                              </Badge>
-                            )}
-                            {item.is_external_url && (
-                              <Badge className="bg-blue-500 text-white text-xs">
-                                External
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <CardContent className="p-4 flex-grow flex flex-col">
-                          <div className="flex items-center justify-between mb-2">
-                            <Badge variant="outline" className="text-xs capitalize">
-                              {item.category?.replace('-', ' ')}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs capitalize">
-                              {item.media_type}
-                            </Badge>
-                          </div>
-                          
-                          <h3 className="font-medium text-gray-900 line-clamp-2 mb-2 flex-grow">
-                            {item.title}
-                          </h3>
-                          
-                          {item.description && (
-                            <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                              {item.description}
-                            </p>
-                          )}
-                          
-                          {item.child_name && (
-                            <p className="text-sm text-gray-500 mb-2">
-                              By {item.child_name}, age {item.child_age}
-                            </p>
-                          )}
-                          
-                          <div className="text-xs text-gray-400 mb-3">
-                            Order: {item.display_order ?? 'N/A'} • Created: {new Date(item.created_date).toLocaleDateString()}
-                          </div>
-                        </CardContent>
-                        
-                        <div className="p-4 border-t flex justify-end gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEditGalleryItem(item)}>
-                            <Edit className="w-4 h-4 mr-1" /> Edit
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleDeleteGalleryItem(item)}>
-                            <Trash2 className="w-4 h-4 mr-1" /> Delete
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )
+                    <div className="flex flex-1 flex-col p-4">
+                      <div className="mb-2 flex items-center gap-1.5">
+                        <StatusBadge tone="blue">{item.category?.replace(/-/g, ' ') || 'uncategorized'}</StatusBadge>
+                        <StatusBadge tone="gray">{item.media_type}</StatusBadge>
+                      </div>
+                      <h3 className="font-medium text-gray-900 line-clamp-2">{item.title}</h3>
+                      {item.child_name && (
+                        <p className="mt-1 text-sm text-gray-500">By {item.child_name}{item.child_age ? `, age ${item.child_age}` : ''}</p>
+                      )}
+                      <p className="mt-auto pt-3 text-xs text-gray-400">Added {formatDate(item.created_date)}</p>
+                    </div>
+                    <div className="flex justify-end gap-2 border-t border-gray-100 p-3">
+                      <Button variant="outline" size="sm" onClick={() => handleEditGalleryItem(item)}>
+                        <Edit className="mr-1 h-4 w-4" /> Edit
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleDeleteGalleryItem(item)}>
+                        <Trash2 className="mr-1 h-4 w-4" /> Delete
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             )}
           </TabsContent>
 
-          {/* Subscribers Tab */}
+          {/* Subscribers */}
           <TabsContent value="subscribers">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Newsletter Subscribers</CardTitle>
+            <SectionHeader title="Newsletter subscribers" description={`${activeSubscribers.length} active subscribers`}>
+              <Button variant="outline" onClick={exportSubscribers} disabled={filteredSubscribers.length === 0}>
+                <Download className="mr-2 h-4 w-4" /> Export CSV
+              </Button>
+            </SectionHeader>
+
+            <Card className="overflow-hidden">
+              <div className="border-b border-gray-100 p-4">
+                <SearchInput
+                  value={subscriberSearch}
+                  onChange={setSubscriberSearch}
+                  placeholder="Search email or name"
+                  label="Search subscribers"
+                  className="sm:max-w-sm"
+                />
+              </div>
+              {filteredSubscribers.length === 0 ? (
+                <div className="p-6">
+                  <EmptyState
+                    icon={Mail}
+                    title={subscribers.length === 0 ? 'No subscribers yet' : 'No subscribers match'}
+                    description={subscribers.length === 0 ? 'People who sign up in the site footer will appear here.' : 'Try a different search.'}
+                  />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Source</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {subscribers.slice(0, 10).map((subscriber) => (
-                        <TableRow key={subscriber.id}>
-                          <TableCell className="font-medium">
-                            {subscriber.email}
-                          </TableCell>
-                          <TableCell>
-                            {subscriber.first_name || '—'}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="capitalize">
-                              {subscriber.subscription_source?.replace('-', ' ')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant="outline"
-                              className={subscriber.is_active ? 'bg-green-100 text-green-800 border-green-200' : ''}
-                            >
-                              {subscriber.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {format(new Date(subscriber.created_date), 'MMM d, yyyy')}
-                          </TableCell>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50/80">
+                          <TableHead>Email</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Source</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Subscribed</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
+                      </TableHeader>
+                      <TableBody>
+                        {subscriberPages.pageItems.map((subscriber) => (
+                          <TableRow key={subscriber.id}>
+                            <TableCell className="font-medium text-gray-900">{subscriber.email}</TableCell>
+                            <TableCell className="text-gray-700">{subscriber.first_name || '—'}</TableCell>
+                            <TableCell className="text-sm capitalize text-gray-600">{subscriber.subscription_source?.replace(/-/g, ' ') || '—'}</TableCell>
+                            <TableCell>
+                              <StatusBadge tone={subscriber.is_active ? 'green' : 'gray'}>{subscriber.is_active ? 'Active' : 'Unsubscribed'}</StatusBadge>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-sm text-gray-600">{formatDate(subscriber.created_date)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <Pagination {...subscriberPages} />
+                </>
+              )}
             </Card>
           </TabsContent>
         </Tabs>
 
-        {/* Referral Detail Modal */}
+        {/* Keyed per referral: the modal copies the referral into form state on mount,
+            so reusing one instance would show (and save) stale values. */}
         <ReferralDetailModal
+          key={selectedReferral?.id ?? 'none'}
           referral={selectedReferral}
-          isOpen={showReferralModal}
-          onClose={() => {
-            setShowReferralModal(false);
+          isOpen={!!selectedReferral}
+          onClose={() => setSelectedReferral(null)}
+          onUpdate={() => {
             setSelectedReferral(null);
+            loadDashboardData();
+            toast.success('Referral updated');
           }}
-          onUpdate={handleUpdateReferral}
         />
       </div>
     </div>

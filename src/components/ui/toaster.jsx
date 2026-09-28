@@ -1,5 +1,7 @@
 import React from 'react';
+import { Toaster as Sonner } from 'sonner';
 
+// App-wide toast notifications. Trigger with: import { toast } from 'sonner'
 export function Toaster() {
-  return null; // Placeholder toaster component
+  return <Sonner position="top-right" richColors closeButton />;
 }

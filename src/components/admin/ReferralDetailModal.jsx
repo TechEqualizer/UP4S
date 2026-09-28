@@ -21,10 +21,12 @@ import {
   Save,
   AlertCircle,
   Clock,
-  CheckCircle
+  CheckCircle,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { KidReferral } from '@/api/entities';
+import { toast } from 'sonner';
 import { getReferralFileUrl } from '@/api/integrations';
 
 export default function ReferralDetailModal({ referral, isOpen, onClose, onUpdate }) {
@@ -77,7 +79,7 @@ export default function ReferralDetailModal({ referral, isOpen, onClose, onUpdat
       onClose();
     } catch (error) {
       console.error('Error updating referral:', error);
-      alert('Error updating referral. Please try again.');
+      toast.error('Could not save the referral', { description: error?.message });
     }
     setIsSaving(false);
   };
@@ -97,15 +99,23 @@ export default function ReferralDetailModal({ referral, isOpen, onClose, onUpdat
     } catch (error) {
       tab?.close();
       console.error('Error opening referral file:', error);
-      alert('Could not open this file. Please try again.');
+      toast.error('Could not open this file', { description: error?.message });
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+        >
+          <X className="h-5 w-5" />
+        </button>
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
+          <DialogTitle className="flex items-center justify-between gap-3 pr-10">
             <span>Referral Details: {referral.child_name}</span>
             <div className="relative group">
               <Badge className={statusColors[referral.status]}>
