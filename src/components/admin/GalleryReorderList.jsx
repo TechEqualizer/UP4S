@@ -4,7 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Edit, Trash2, Play } from 'lucide-react';
-import { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
+import { getVideoThumbnail, THUMBNAIL_MIN_WIDTH } from '@/components/gallery/VideoEmbed';
+import SmartImage from '@/components/ui/smart-image';
 
 export default function GalleryReorderList({ items, onReorder, onEdit, onDelete }) {
   const getDisplayImage = (item) => {
@@ -55,18 +56,13 @@ export default function GalleryReorderList({ items, onReorder, onEdit, onDelete 
 
                         {/* Thumbnail */}
                         <div className="w-16 h-16 flex-shrink-0 relative overflow-hidden rounded-lg">
-                          <img
+                          <SmartImage
                             src={getDisplayImage(item)}
+                            fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
+                            minNaturalWidth={item.is_external_url && item.media_type === 'video' ? THUMBNAIL_MIN_WIDTH : 0}
                             alt={item.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              if (item.is_external_url && item.media_type === 'video') {
-                                const thumbnail = getVideoThumbnail(item.media_url);
-                                if (thumbnail?.fallback && e.target.src !== thumbnail.fallback) {
-                                  e.target.src = thumbnail.fallback;
-                                }
-                              }
-                            }}
+                            placeholderIcon={item.media_type === 'video' ? 'video' : 'image'}
+                            className="h-full w-full object-cover [&_svg]:h-5 [&_svg]:w-5"
                           />
                           {item.media_type === 'video' && (
                             <div className="absolute inset-0 flex items-center justify-center">

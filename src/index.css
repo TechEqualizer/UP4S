@@ -222,7 +222,9 @@ button:focus-visible {
   /* Animation utilities */
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    /* `none`, not translateY(0): a leftover transform turns the element into the
+       containing block for position:fixed descendants (modals, overlays). */
+    to { opacity: 1; transform: none; }
   }
 
   .animate-fade-in {

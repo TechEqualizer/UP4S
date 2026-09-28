@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Play, X } from 'lucide-react';
 import SmartImage from '@/components/ui/smart-image';
 import { Dialog } from '@/components/ui/dialog';
-import VideoEmbed, { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
+import VideoEmbed, { getVideoThumbnail, THUMBNAIL_MIN_WIDTH } from '@/components/gallery/VideoEmbed';
 import { cn } from '@/lib/utils';
 
 export const CATEGORY_LABELS = {
@@ -49,6 +49,7 @@ export function MediaCard({ item, onOpen, className, style, showCategory = true 
         <SmartImage
           src={getDisplayImage(item)}
           fallbackSrc={item.is_external_url && isVideo ? getVideoThumbnail(item.media_url)?.fallback : undefined}
+          minNaturalWidth={item.is_external_url && isVideo ? THUMBNAIL_MIN_WIDTH : 0}
           alt=""
           placeholderIcon={isVideo ? 'video' : 'image'}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
@@ -61,6 +62,11 @@ export function MediaCard({ item, onOpen, className, style, showCategory = true 
             </span>
           </div>
         )}
+        {isVideo && (
+          <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
+            <Play className="h-3 w-3 fill-current" aria-hidden="true" /> Watch
+          </span>
+        )}
       </div>
       <div className="flex min-h-[4.5rem] flex-col justify-center px-4 py-3.5">
         <h3 className="truncate font-semibold text-gray-900 transition-colors group-hover:text-blue-700" title={item.title}>
@@ -72,53 +78,85 @@ export function MediaCard({ item, onOpen, className, style, showCategory = true 
   );
 }
 
-// Full-size viewer for a gallery item.
+// Full-screen, cinema-style viewer for a gallery item. The media is sized to fit the
+// viewport (16:9 for video), with the close button and title above it so nothing
+// covers the player's own controls.
 export function MediaLightbox({ item, onClose }) {
   if (!item) return null;
+  // Keyed so each item starts fresh (player loading state, "Read more").
+  return <Viewer key={item.id} item={item} onClose={onClose} />;
+}
+
+function Viewer({ item, onClose }) {
+  const [showMore, setShowMore] = useState(false);
   const isVideo = item.media_type === 'video';
+  const meta = [categoryLabel(item.category), isVideo ? 'Video' : 'Photo'].filter(Boolean).join(' · ');
+  const longDescription = (item.description || '').length > 180;
+
   return (
-    <Dialog open={!!item} onOpenChange={onClose}>
-      <div className="relative z-50 w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[92vh] overflow-y-auto">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur transition hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+    <Dialog
+      open={!!item}
+      onOpenChange={onClose}
+      aria-label={item.title}
+      className="p-0 sm:p-6"
+      overlayClassName="bg-gray-950/95 backdrop-blur-sm"
+    >
+      <div className="relative z-50 flex max-h-full w-full flex-col overflow-y-auto">
+        <div
+          className="mx-auto w-full"
+          // Largest 16:9 box that fits under the title bar; the caption scrolls below it.
+          style={{ maxWidth: 'min(72rem, calc((100svh - 7rem) * 16 / 9))', minWidth: 'min(100vw, 20rem)' }}
         >
-          <X className="h-5 w-5" aria-hidden="true" />
-        </button>
-
-        <div className="relative aspect-video overflow-hidden bg-gray-950">
-          {isVideo ? (
-            item.is_external_url ? (
-              <VideoEmbed url={item.media_url} title={item.title} />
-            ) : (
-              <video src={item.media_url} controls autoPlay className="h-full w-full object-contain" />
-            )
-          ) : (
-            <img src={item.media_url} alt={item.title} className="h-full w-full object-contain" />
-          )}
-        </div>
-
-        <div className="p-6 sm:p-8">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
-            {item.category && <span>{categoryLabel(item.category)}</span>}
-            {item.category && <span className="text-gray-300">•</span>}
-            <span className="text-gray-500">{isVideo ? 'Video' : 'Photo'}</span>
+          <div className="flex items-center justify-between gap-4 px-4 pb-3 pt-4 text-white sm:px-0 sm:pt-0">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-yellow-400">{meta}</p>
+              <h2 className="mt-1 truncate font-display text-lg font-bold tracking-tight sm:text-xl" title={item.title}>{item.title}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
           </div>
-          <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{item.title}</h2>
-          {item.child_name && (
-            <div className="mt-4 flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 font-semibold text-blue-700">
-                {item.child_name.charAt(0).toUpperCase()}
-              </span>
-              <div className="text-sm">
-                <p className="font-medium text-gray-900">Created by {item.child_name}</p>
-                {item.child_age && <p className="text-gray-500">Age {item.child_age}</p>}
-              </div>
+
+          {isVideo ? (
+            <div className="relative aspect-video w-full overflow-hidden bg-black shadow-2xl sm:rounded-xl">
+              <VideoEmbed url={item.media_url} title={item.title} />
+            </div>
+          ) : (
+            <img
+              src={item.media_url}
+              alt={item.title}
+              className="mx-auto max-h-[calc(100svh-7rem)] w-auto max-w-full object-contain sm:rounded-xl"
+            />
+          )}
+
+          {(item.child_name || item.description) && (
+            <div className="px-4 pb-6 pt-4 text-sm text-gray-300 sm:px-0">
+              {item.child_name && (
+                <p className="font-medium text-white">
+                  Created by {item.child_name}{item.child_age ? `, age ${item.child_age}` : ''}
+                </p>
+              )}
+              {item.description && (
+                <p className={`mt-1 max-w-3xl leading-relaxed ${longDescription && !showMore ? 'line-clamp-2' : ''}`}>
+                  {item.description}
+                </p>
+              )}
+              {longDescription && (
+                <button
+                  type="button"
+                  onClick={() => setShowMore((v) => !v)}
+                  className="mt-1 rounded font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  {showMore ? 'Show less' : 'Read more'}
+                </button>
+              )}
             </div>
           )}
-          {item.description && <p className="mt-4 max-w-3xl leading-relaxed text-gray-600">{item.description}</p>}
         </div>
       </div>
     </Dialog>

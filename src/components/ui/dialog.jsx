@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
-const Dialog = ({ open, onOpenChange, children }) => {
+const Dialog = ({ open, onOpenChange, children, className, overlayClassName, ...props }) => {
   const containerRef = useRef(null);
   const onOpenChangeRef = useRef(onOpenChange);
   onOpenChangeRef.current = onOpenChange;
@@ -27,20 +28,25 @@ const Dialog = ({ open, onOpenChange, children }) => {
 
   if (!open) return null;
 
-  return (
+  // Portal to <body>: an ancestor with a transform (e.g. the page fade-in animation)
+  // would otherwise become the containing block and pin this "fixed" layer to the
+  // top of the page instead of the screen.
+  return createPortal(
     <div
       ref={containerRef}
       role="dialog"
       aria-modal="true"
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none"
+      className={cn("fixed inset-0 z-50 flex items-center justify-center p-4 outline-none", className)}
+      {...props}
     >
       <div
-        className="fixed inset-0 bg-black/70 animate-fade-in"
+        className={cn("fixed inset-0 bg-black/70 animate-fade-in", overlayClassName)}
         onClick={() => onOpenChange(false)}
       />
       {children}
-    </div>
+    </div>,
+    document.body
   );
 };
 

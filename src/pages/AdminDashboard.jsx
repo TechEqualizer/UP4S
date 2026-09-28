@@ -19,7 +19,7 @@ import ReferralDetailModal from '@/components/admin/ReferralDetailModal';
 import EventForm from '@/components/admin/EventForm';
 import AdminShell from '@/components/admin/AdminShell';
 import VolunteerDetailModal from '@/components/admin/VolunteerDetailModal';
-import { getVideoThumbnail } from '@/components/gallery/VideoEmbed';
+import { getVideoThumbnail, THUMBNAIL_MIN_WIDTH } from '@/components/gallery/VideoEmbed';
 import { formatCurrency } from '@/lib/utils';
 import {
   StatCard, SectionHeader, SearchInput, EmptyState, StatusBadge, Pagination, usePagination, Panel, IconButton,
@@ -623,6 +623,7 @@ export default function AdminDashboard() {
                       <SmartImage
                         src={getDisplayImage(item)}
                         fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
+                        minNaturalWidth={item.is_external_url && item.media_type === 'video' ? THUMBNAIL_MIN_WIDTH : 0}
                         alt={item.title}
                         placeholderIcon={item.media_type === 'video' ? 'video' : 'image'}
                         className="absolute inset-0 h-full w-full object-cover [&_svg]:h-5 [&_svg]:w-5"
@@ -1044,6 +1045,7 @@ export default function AdminDashboard() {
                     <SmartImage
                       src={getDisplayImage(item)}
                       fallbackSrc={item.is_external_url && item.media_type === 'video' ? getVideoThumbnail(item.media_url)?.fallback : undefined}
+                        minNaturalWidth={item.is_external_url && item.media_type === 'video' ? THUMBNAIL_MIN_WIDTH : 0}
                       alt=""
                       placeholderIcon={item.media_type === 'video' ? 'video' : 'image'}
                       className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"

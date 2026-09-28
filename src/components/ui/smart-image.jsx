@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 // <img> that tries `fallbackSrc` if `src` fails, then shows a tidy placeholder
 // instead of the browser's broken-image icon and alt text.
-export default function SmartImage({ src, fallbackSrc, alt, className, placeholderIcon = 'image', ...props }) {
+export default function SmartImage({ src, fallbackSrc, alt, className, placeholderIcon = 'image', minNaturalWidth = 0, ...props }) {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [failed, setFailed] = useState(!src);
 
@@ -12,6 +12,11 @@ export default function SmartImage({ src, fallbackSrc, alt, className, placehold
     setCurrentSrc(src);
     setFailed(!src);
   }, [src]);
+
+  function tryFallback() {
+    if (fallbackSrc && currentSrc !== fallbackSrc) setCurrentSrc(fallbackSrc);
+    else setFailed(true);
+  }
 
   if (failed) {
     const Icon = placeholderIcon === 'video' ? Play : ImageOff;
@@ -33,9 +38,10 @@ export default function SmartImage({ src, fallbackSrc, alt, className, placehold
       loading="lazy"
       decoding="async"
       className={cn('bg-gray-100', className)}
-      onError={() => {
-        if (fallbackSrc && currentSrc !== fallbackSrc) setCurrentSrc(fallbackSrc);
-        else setFailed(true);
+      onError={tryFallback}
+      onLoad={(e) => {
+        // Some hosts answer a missing image with a tiny placeholder instead of an error.
+        if (minNaturalWidth && e.currentTarget.naturalWidth < minNaturalWidth) tryFallback();
       }}
       {...props}
     />
