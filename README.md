@@ -45,7 +45,16 @@ supabase/
    select id from auth.users where email = 'person@example.org';
    ```
 
-   They sign in at `/Login` with an emailed link. Supabase's built-in email is rate-limited to a few messages an hour; configure a custom SMTP provider for production.
+   They sign in at `/Login` with their email and password, or with an emailed link. To set or reset a
+   password without email, run this in the SQL editor (the password never leaves Supabase):
+
+   ```sql
+   update auth.users
+   set encrypted_password = extensions.crypt('choose-a-strong-password', extensions.gen_salt('bf', 10))
+   where email = 'person@example.org';
+   ```
+
+   Emailed links only work once the Site URL and Redirect URLs (step 2) are set. Supabase's built-in email is rate-limited to a few messages an hour; configure a custom SMTP provider for production.
 
 4. **Stripe**: set the function secrets and deploy the functions:
 
