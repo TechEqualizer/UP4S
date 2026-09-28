@@ -61,6 +61,15 @@ supabase/
    supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
    ```
 
+## Deploying to Vercel
+
+`vercel.json` configures the build and serves `index.html` for every route (React Router handles routing in the browser).
+
+1. Import the repository in Vercel (Add New → Project). Framework and build settings come from `vercel.json`.
+2. Add the environment variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (use the legacy `eyJ…` anon key; the checkout function's JWT check doesn't accept `sb_publishable_…` keys).
+3. Under Settings → Deployment Protection, make sure Vercel Authentication covers previews only, or visitors will be asked to log in to Vercel.
+4. Point Supabase's Auth Site URL and the `SITE_URL` function secret at the site's final domain.
+
 ## Importing data from Base44
 
 Export each entity from the Base44 dashboard (Data → entity → Export CSV) into one folder, then:
