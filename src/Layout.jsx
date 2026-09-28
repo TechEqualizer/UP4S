@@ -74,7 +74,7 @@ export default function Layout({ children, currentPageName }) {
             <div className="flex items-center gap-6">
               <Link to={createPageUrl("Homepage")} className="flex items-center gap-3 group">
                 <img
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/689f4e044d22f613693763ee/d50ebdb68_TeamUP4s2.png"
+                  src="/team-up4s-logo.png"
                   alt="Team UP4S Logo"
                   className="h-10 w-auto"
                 />
@@ -113,7 +113,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex justify-between items-center h-20">
             <Link to={createPageUrl("Homepage")} className="group">
               <img
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/689f4e044d22f613693763ee/d50ebdb68_TeamUP4s2.png"
+                src="/team-up4s-logo.png"
                 alt="Team UP4S Logo"
                 className="h-16 w-auto transition-transform duration-300 group-hover:scale-105"
               />
@@ -218,7 +218,7 @@ export default function Layout({ children, currentPageName }) {
             <div className="col-span-1 lg:col-span-2">
               <div className="flex items-center gap-4 mb-6">
                 <img
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/689f4e044d22f613693763ee/d50ebdb68_TeamUP4s2.png"
+                  src="/team-up4s-logo.png"
                   alt="Team UP4S Logo"
                   className="h-16 w-auto"
                 />
