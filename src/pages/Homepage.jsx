@@ -299,7 +299,7 @@ export default function Homepage() {
           <Reveal delay={120} className="lg:col-span-7">
             <Eyebrow tone="dark">Our story</Eyebrow>
             <h2 className="mt-4 font-display text-display-lg font-bold text-white">
-              Unlimited potential, <Accent tone="gold">for every kid in Detroit</Accent>
+              Unlimited potential, <Accent tone="gold">for every kid in Metro Detroit</Accent>
             </h2>
             <div className="mt-6 max-w-2xl space-y-4 text-lg leading-relaxed text-gray-300">
               <p>

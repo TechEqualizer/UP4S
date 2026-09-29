@@ -71,7 +71,7 @@ export default function About() {
       <header className="relative isolate overflow-hidden bg-gray-50">
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(50rem_30rem_at_15%_0%,rgba(37,99,235,0.12),transparent_70%)]" />
         <Container className="grid grid-cols-1 items-center gap-12 py-16 sm:py-24 lg:grid-cols-12 lg:gap-16">
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-6">
             <Eyebrow className="mb-4">Unlimited Potential 4 Success</Eyebrow>
             <h1 className="font-display text-display-xl font-bold text-gray-900">
               Founded on a dream, <Accent>built for our community</Accent>
@@ -98,9 +98,9 @@ export default function About() {
             </div>
           </div>
 
-          <div className="lg:col-span-5">
-            <figure className="relative mx-auto max-w-sm lg:max-w-none">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-gray-100 shadow-2xl shadow-gray-900/10 ring-1 ring-gray-900/5">
+          <div className="lg:col-span-6">
+            <figure className="relative mx-auto max-w-xl lg:max-w-none">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-gray-100 shadow-2xl shadow-gray-900/10 ring-1 ring-gray-900/5">
                 <SmartImage src={FOUNDER_PHOTO} alt="Wendy Anderson with her family" className="absolute inset-0 h-full w-full object-cover" />
               </div>
               <figcaption className="absolute -bottom-5 left-5 right-5 rounded-2xl border border-gray-200/80 bg-white/95 px-5 py-4 shadow-xl backdrop-blur sm:left-auto sm:right-[-1.25rem] sm:w-64">
