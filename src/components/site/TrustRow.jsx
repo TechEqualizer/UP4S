@@ -2,30 +2,7 @@ import React from 'react';
 import { Lock, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Payment methods enabled on the Team UP4S Stripe account (checked 2026-09-29:
-// card, Apple Pay, Google Pay, Link). Keep this list in sync with Stripe →
-// Settings → Payment methods; never show a method donors can't actually use.
-export const ACCEPTED_PAYMENTS = ['Visa', 'Mastercard', 'Amex', 'Discover', 'Apple Pay', 'Google Pay', 'Link'];
-
 const EIN = '92-2415944';
-
-function PaymentMarks({ tone }) {
-  return (
-    <ul className="flex flex-wrap items-center justify-center gap-1.5" aria-label="Accepted payment methods">
-      {ACCEPTED_PAYMENTS.map((name) => (
-        <li
-          key={name}
-          className={cn(
-            'rounded-md px-2 py-0.5 text-[11px] font-bold tracking-wide ring-1',
-            tone === 'dark' ? 'bg-white/10 text-white ring-white/15' : 'bg-white text-gray-700 ring-gray-200'
-          )}
-        >
-          {name}
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 // Reassurance shown before people hand over payment details. Only claims that are
 // true for Team UP4S: Stripe processes every payment (the site never sees card
@@ -36,12 +13,11 @@ export default function TrustRow({ variant = 'full', tone = 'light', className }
 
   if (variant === 'compact') {
     return (
-      <div className={cn('space-y-3 text-center text-xs', muted, className)}>
+      <div className={cn('text-center text-xs', muted, className)}>
         <p className="flex items-center justify-center gap-1.5">
           <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>Secure checkout by <span className={cn('font-semibold', strong)}>Stripe</span> · 501(c)(3) · Tax-deductible</span>
         </p>
-        <PaymentMarks tone={tone} />
       </div>
     );
   }
@@ -63,9 +39,6 @@ export default function TrustRow({ variant = 'full', tone = 'light', className }
             EIN {EIN}. Your gift is tax-deductible to the extent allowed by law.
           </span>
         </p>
-      </div>
-      <div className={cn('mt-4 border-t pt-3', tone === 'dark' ? 'border-white/10' : 'border-gray-200/80')}>
-        <PaymentMarks tone={tone} />
       </div>
     </div>
   );
