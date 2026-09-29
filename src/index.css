@@ -6,6 +6,12 @@
   html {
     -webkit-text-size-adjust: 100%;
   }
+  /* Nothing may pan the page sideways on a hard swipe. `clip` (unlike `hidden`)
+     doesn't create a scroll container, so the sticky header keeps working. */
+  html, body {
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+  }
   body {
     @apply font-sans text-gray-900 antialiased;
     text-rendering: optimizeLegibility;
@@ -225,6 +231,12 @@ button:focus-visible {
     /* `none`, not translateY(0): a leftover transform turns the element into the
        containing block for position:fixed descendants (modals, overlays). */
     to { opacity: 1; transform: none; }
+  }
+
+  /* Hero slide indicator: fills while the slide is showing. */
+  @keyframes hero-progress {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
   }
 
   .animate-fade-in {
