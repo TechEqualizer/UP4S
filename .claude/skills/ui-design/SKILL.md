@@ -114,8 +114,8 @@ Build from `src/components/site/ui.jsx`; don't hand-roll headings, bands or butt
   Share with `SharePanel` / `shareEvent` / `copyEventLink`; share links always use
   https://www.teamup4s.org. `api/event-page.js` fills in the link-preview tags for each event.
 - Payment steps show `TrustRow` (`components/site/TrustRow.jsx`): Stripe security, 501(c)(3)/EIN,
-  tax-deductible, accepted methods. Only true claims: keep `ACCEPTED_PAYMENTS` in sync with the
-  Stripe dashboard, and never add third-party seals (Candid, BBB, Charity Navigator) not yet earned.
+  tax-deductible. No card-brand badges (owner's call). Only true claims: never add third-party
+  seals (Candid, BBB, Charity Navigator) the organization hasn't earned.
 - Feedback is `toast` from sonner, never `alert()`.
 - Respect `prefers-reduced-motion` for slideshows and animations.
 

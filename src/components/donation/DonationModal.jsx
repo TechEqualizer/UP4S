@@ -256,7 +256,7 @@ export default function DonationModal({ isOpen, onClose, event }) {
             )}
           </button>
 
-          <TrustRow className="mt-4" showPayments={false} />
+          <TrustRow className="mt-4" />
         </form>
       </div>
     </div>
