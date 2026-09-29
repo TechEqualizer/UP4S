@@ -7,6 +7,7 @@ import { Container, Section, SectionHeading, CtaBand, Accent, Eyebrow, ctaClass 
 import Reveal from '@/components/site/Reveal';
 import SmartImage from '@/components/ui/smart-image';
 import { formatCurrency } from '@/lib/utils';
+import { donateToEvent, eventPath } from '@/lib/events';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/index';
 import CountUp from '@/components/site/CountUp';
@@ -227,22 +228,18 @@ export default function Homepage() {
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-600" aria-hidden="true" /> Coming up
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-display text-lg font-bold tracking-tight sm:truncate sm:text-xl" title={nextEvent.title}>{nextEvent.title}</p>
+                  <Link to={eventPath(nextEvent)} className="block rounded font-display text-lg font-bold tracking-tight after:absolute after:inset-0 after:content-[''] hover:text-yellow-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:truncate sm:text-xl" title={nextEvent.title}>{nextEvent.title}</Link>
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-gray-400">
                     <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" aria-hidden="true" />{format(new Date(nextEvent.event_date), 'EEEE, MMMM d')}</span>
                     {nextEvent.location && <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" aria-hidden="true" />{nextEvent.location}</span>}
                     {goal > 0 && <span className="tabular-nums text-gray-300">{formatCurrency(raised)} raised of {formatCurrency(goal)}</span>}
                   </p>
                 </div>
-                <div className="flex shrink-0 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal', { detail: { eventId: nextEvent.id, eventTitle: nextEvent.title } }))}
-                    className={ctaClass('light', 'sm')}
-                  >
+                <div className="relative z-10 flex shrink-0 gap-2">
+                  <button type="button" onClick={() => donateToEvent(nextEvent)} className={ctaClass('light', 'sm')}>
                     <Heart className="h-4 w-4 text-blue-600" aria-hidden="true" /> Support this event
                   </button>
-                  <Link to={createPageUrl('Fundraising')} className={ctaClass('ghostLight', 'sm')}>Details</Link>
+                  <Link to={eventPath(nextEvent)} className={ctaClass('ghostLight', 'sm')}>Details</Link>
                 </div>
               </Reveal>
             </Container>

@@ -26,6 +26,7 @@ const TestingDashboard = lazy(() => import("./TestingDashboard"));
 
 import Login from "./Login";
 import NotFound from "./NotFound";
+import EventPage from "./Event";
 
 import { AuthProvider, RequireAdmin } from "@/lib/auth";
 
@@ -78,6 +79,7 @@ function _getCurrentPage(url) {
     }
 
     if (!urlLastPart) return Object.keys(PAGES)[0];
+    if (/^\/events\/[^/]+$/i.test(url)) return 'Event';
     const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
     return pageName || 'NotFound';
 }
@@ -118,6 +120,8 @@ function PagesContent() {
                 <Route path="/TestingDashboard" element={<RequireAdmin><TestingDashboard /></RequireAdmin>} />
                 
                 <Route path="/Login" element={<Login />} />
+
+                <Route path="/events/:slug" element={<EventPage />} />
 
                 <Route path="*" element={<NotFound />} />
                 

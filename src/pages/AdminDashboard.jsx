@@ -10,7 +10,7 @@ import SmartImage from '@/components/ui/smart-image';
 import {
   DollarSign, Users, Camera, Mail, Download, Eye, Plus, Edit, Trash2, Play, Target,
   Calendar, MapPin, CalendarDays, Heart, ExternalLink, LayoutGrid, ListOrdered, RefreshCw, Star, Paperclip,
-  LayoutDashboard, Images, ArrowRight, HandHeart,
+  LayoutDashboard, Images, ArrowRight, HandHeart, Link2,
 } from 'lucide-react';
 import { format, isThisMonth } from 'date-fns';
 import GalleryForm from '@/components/admin/GalleryForm';
@@ -18,6 +18,8 @@ import GalleryReorderList from '@/components/admin/GalleryReorderList';
 import ReferralDetailModal from '@/components/admin/ReferralDetailModal';
 import EventForm from '@/components/admin/EventForm';
 import AdminShell from '@/components/admin/AdminShell';
+import { copyEventLink } from '@/components/site/SharePanel';
+import { eventPath } from '@/lib/events';
 import VolunteerDetailModal from '@/components/admin/VolunteerDetailModal';
 import { getVideoThumbnail, THUMBNAIL_MIN_WIDTH } from '@/components/gallery/VideoEmbed';
 import { formatCurrency } from '@/lib/utils';
@@ -964,6 +966,17 @@ export default function AdminDashboard() {
                         {goal > 0 && `${pct.toFixed(0)}% · `}{donationCount} online donation{donationCount === 1 ? '' : 's'}
                       </p>
                       <div className="flex">
+                        <IconButton label={`Copy share link for ${event.title}`} icon={Link2} onClick={() => copyEventLink(event)} />
+                        <a
+                          href={eventPath(event)}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`View ${event.title} page`}
+                          title="View public page"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                        >
+                          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                        </a>
                         <IconButton label={`Edit ${event.title}`} icon={Edit} onClick={() => handleEditEvent(event)} />
                         <IconButton label={`Delete ${event.title}`} icon={Trash2} tone="danger" onClick={() => handleDeleteEvent(event)} />
                       </div>
