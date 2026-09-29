@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { GalleryItem } from '@/api/entities';
-import { Heart, ArrowRight, Camera, Users, Target, ShieldCheck, MapPin, Clapperboard } from 'lucide-react';
+import { GalleryItem, FundraisingEvent } from '@/api/entities';
+import { Heart, ArrowRight, Camera, Users, Target, ShieldCheck, MapPin, Clapperboard, HandHeart, Calendar } from 'lucide-react';
+import { format } from 'date-fns';
 import { MediaCard, MediaLightbox } from '@/components/gallery/MediaCard';
-import { Container, Section, SectionHeading, CtaBand, Accent, ctaClass } from '@/components/site/ui';
+import { Container, Section, SectionHeading, CtaBand, Accent, Eyebrow, ctaClass } from '@/components/site/ui';
+import Reveal from '@/components/site/Reveal';
+import SmartImage from '@/components/ui/smart-image';
+import { formatCurrency } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/index';
 import CountUp from '@/components/site/CountUp';
@@ -12,6 +16,7 @@ export default function Homepage() {
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [nextEvent, setNextEvent] = useState(null);
 
   const heroSlides = [
     {
@@ -64,6 +69,13 @@ export default function Homepage() {
 
   useEffect(() => {
     loadFeaturedGallery();
+    // The next active event, for the "Coming up" strip. Optional: hidden on failure.
+    FundraisingEvent.list('event_date', 50)
+      .then((events) => {
+        const now = new Date();
+        setNextEvent(events.find((e) => e.is_active && e.event_date && new Date(e.event_date) >= now) ?? null);
+      })
+      .catch(() => setNextEvent(null));
   }, []);
 
   // Auto-play for hero slideshow: paused while hovered/focused, off for reduced motion
@@ -150,6 +162,13 @@ export default function Homepage() {
           );
         })}
 
+        {/* Subtle film grain */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[15] opacity-[0.14] mix-blend-overlay"
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}
+        />
+
         {/* Slide indicators */}
         <Container className="absolute inset-x-0 bottom-8 z-20 flex gap-2">
           {heroSlides.map((slide, index) => (
@@ -161,9 +180,18 @@ export default function Homepage() {
               aria-current={index === currentHeroSlide}
               className="group py-2 focus-visible:outline-none"
             >
-              <span className={`block h-1 rounded-full transition-all duration-500 group-focus-visible:ring-2 group-focus-visible:ring-white ${
-                index === currentHeroSlide ? 'w-10 bg-white' : 'w-5 bg-white/35 group-hover:bg-white/60'
-              }`} />
+              <span className={`relative block h-1 overflow-hidden rounded-full bg-white/35 transition-all duration-500 group-hover:bg-white/60 group-focus-visible:ring-2 group-focus-visible:ring-white ${
+                index === currentHeroSlide ? 'w-12' : 'w-5'
+              }`}>
+                {index === currentHeroSlide && (
+                  // Fills over the 6s the slide is shown; pauses with the slideshow.
+                  <span
+                    key={currentHeroSlide}
+                    className="absolute inset-0 origin-left rounded-full bg-white"
+                    style={{ animation: 'hero-progress 6s linear forwards', animationPlayState: isHeroPaused ? 'paused' : 'running' }}
+                  />
+                )}
+              </span>
             </button>
           ))}
         </Container>
@@ -186,6 +214,42 @@ export default function Homepage() {
         </Container>
       </div>
 
+      {/* Next event */}
+      {nextEvent && (() => {
+        const goal = Number(nextEvent.fundraising_goal) || 0;
+        const raised = Number(nextEvent.amount_raised) || 0;
+        return (
+          <div className="bg-white">
+            <Container className="py-6 sm:py-8">
+              <Reveal className="relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl bg-gray-950 px-5 py-5 text-white sm:flex-row sm:items-center sm:gap-6 sm:px-7">
+                <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(30rem_12rem_at_0%_50%,rgba(37,99,235,0.45),transparent_70%)]" />
+                <span className="inline-flex items-center gap-2 self-start rounded-full bg-yellow-400 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-gray-950 sm:self-center">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-600" aria-hidden="true" /> Coming up
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-lg font-bold tracking-tight sm:truncate sm:text-xl" title={nextEvent.title}>{nextEvent.title}</p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-gray-400">
+                    <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" aria-hidden="true" />{format(new Date(nextEvent.event_date), 'EEEE, MMMM d')}</span>
+                    {nextEvent.location && <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" aria-hidden="true" />{nextEvent.location}</span>}
+                    {goal > 0 && <span className="tabular-nums text-gray-300">{formatCurrency(raised)} raised of {formatCurrency(goal)}</span>}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent('openDonationModal', { detail: { eventId: nextEvent.id, eventTitle: nextEvent.title } }))}
+                    className={ctaClass('light', 'sm')}
+                  >
+                    <Heart className="h-4 w-4 text-blue-600" aria-hidden="true" /> Support this event
+                  </button>
+                  <Link to={createPageUrl('Fundraising')} className={ctaClass('ghostLight', 'sm')}>Details</Link>
+                </div>
+              </Reveal>
+            </Container>
+          </div>
+        );
+      })()}
+
       {/* Approach */}
       <Section tone="muted">
         <Container>
@@ -196,8 +260,9 @@ export default function Homepage() {
           />
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {impactPillars.map((pillar, index) => (
-              <div
+              <Reveal
                 key={pillar.title}
+                delay={index * 110}
                 className="group relative rounded-2xl border border-gray-200/80 bg-white p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-shadow duration-300 hover:shadow-lg hover:shadow-gray-900/[0.05]"
               >
                 <div className="flex items-center justify-between">
@@ -208,9 +273,54 @@ export default function Homepage() {
                 </div>
                 <h3 className="mt-8 font-display text-2xl font-bold tracking-tight text-gray-900">{pillar.title}</h3>
                 <p className="mt-3 leading-relaxed text-gray-600">{pillar.description}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
+        </Container>
+      </Section>
+
+      {/* Our story */}
+      <Section tone="dark" className="relative isolate overflow-hidden">
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_30rem_at_90%_20%,rgba(37,99,235,0.35),transparent_70%)]" />
+        <Container className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
+          <Reveal className="relative lg:col-span-5">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-gray-900 ring-1 ring-white/10">
+              <SmartImage src="/hero/brunch-smile.jpg" alt="A smiling young person at a Team UP4S event" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: '45% 35%' }} />
+              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-gray-950/60 via-transparent to-transparent" />
+            </div>
+            <div className="absolute -bottom-5 left-5 rounded-2xl bg-yellow-400 px-5 py-3 text-gray-950 shadow-xl sm:-right-5 sm:left-auto">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em]">A dream since</p>
+              <p className="font-display text-3xl font-extrabold leading-none tracking-tight">1999</p>
+            </div>
+          </Reveal>
+          <Reveal delay={120} className="lg:col-span-7">
+            <Eyebrow tone="dark">Our story</Eyebrow>
+            <h2 className="mt-4 font-display text-display-lg font-bold text-white">
+              Unlimited potential, <Accent tone="gold">for every kid in Detroit</Accent>
+            </h2>
+            <div className="mt-6 max-w-2xl space-y-4 text-lg leading-relaxed text-gray-300">
+              <p>
+                In 1999, Shannon Anderson dreamed of a place called &ldquo;Unlimited Potential 4 Success.&rdquo;
+                Today, his wife, founder Wendy Anderson, has brought that vision to life.
+              </p>
+              <p>
+                Team UP4S gives young people facing street violence, drug use and trauma professional training in
+                film, media and the performing arts, so they can find their voice, build their future and tell their story.
+              </p>
+            </div>
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 font-display font-bold text-white ring-1 ring-white/15">WA</span>
+                <div className="text-sm">
+                  <p className="font-semibold text-white">Wendy Anderson</p>
+                  <p className="text-gray-400">Founder &amp; CEO</p>
+                </div>
+              </div>
+              <Link to={createPageUrl('About')} className={ctaClass('ghostLight', 'md')}>
+                Read our story <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </Reveal>
         </Container>
       </Section>
 
@@ -265,25 +375,44 @@ export default function Homepage() {
         </Container>
       </Section>
 
-      {/* Call to action */}
+      {/* Ways to help */}
       <CtaBand
         eyebrow="Make a difference today"
-        title={<>Ready to change <Accent tone="gold">a life?</Accent></>}
+        title={<>Three ways to <Accent tone="gold">change a life</Accent></>}
         lede="Your support doesn’t just fund equipment. It provides a safe space, real skills and a new direction, moving young people from the streets and into the studio."
+        childrenClassName="mx-auto grid max-w-5xl grid-cols-1 gap-4 text-left sm:grid-cols-3 sm:flex-none"
         footer={<>
           <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" aria-hidden="true" /> Secure checkout by Stripe</span>
           <span className="flex items-center gap-2"><Users className="h-4 w-4" aria-hidden="true" /> 501(c)(3) · EIN 92-2415944</span>
           <span className="flex items-center gap-2"><MapPin className="h-4 w-4" aria-hidden="true" /> Serving Metro Detroit</span>
         </>}
       >
-        <button type="button" onClick={openDonate} className={ctaClass('light', 'lg')}>
-          <Heart className="h-5 w-5 text-blue-600" aria-hidden="true" />
-          Donate today
-        </button>
-        <Link to={createPageUrl("ReferKid")} className={ctaClass('ghostLight', 'lg')}>
-          Refer a child
-          <ArrowRight className="h-5 w-5" aria-hidden="true" />
-        </Link>
+        {[
+          { icon: Heart, title: 'Give', text: 'A tax-deductible gift puts cameras, mentors and studio time in young hands.', cta: 'Donate now', onClick: openDonate },
+          { icon: Users, title: 'Refer a kid', text: 'Know a young person whose story deserves to be told? We’ll reach out within 48 hours.', cta: 'Make a referral', to: createPageUrl('ReferKid') },
+          { icon: HandHeart, title: 'Volunteer', text: 'Mentor on set, help at events or lend your skills behind the scenes.', cta: 'Get involved', to: `${createPageUrl('Fundraising')}#volunteer-section` },
+        ].map(({ icon: Icon, title, text, cta, onClick, to }, index) => {
+          const cardClass = 'group flex h-full flex-col rounded-2xl bg-white/[0.07] p-6 ring-1 ring-white/15 backdrop-blur transition hover:bg-white/[0.12] hover:ring-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white';
+          const body = (
+            <>
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-yellow-300 ring-1 ring-white/15">
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <h3 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">{title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-blue-100">{text}</p>
+              <span className="mt-auto inline-flex items-center gap-1.5 pt-6 text-sm font-semibold text-white">
+                {cta} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              </span>
+            </>
+          );
+          return (
+            <Reveal key={title} delay={index * 110} className="h-full">
+              {onClick
+                ? <button type="button" onClick={onClick} className={`${cardClass} w-full text-left`}>{body}</button>
+                : <Link to={to} className={cardClass}>{body}</Link>}
+            </Reveal>
+          );
+        })}
       </CtaBand>
 
       <MediaLightbox item={selectedItem} onClose={() => setSelectedItem(null)} />

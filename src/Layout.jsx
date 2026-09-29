@@ -20,6 +20,7 @@ const PAGE_TITLES = {
   DonationSuccess: "Thank you · Team UP4S",
   AdminDashboard: "Admin · Team UP4S",
   Login: "Sign in · Team UP4S",
+  NotFound: "Page not found · Team UP4S",
 };
 
 const NAV_ITEMS = [
@@ -61,11 +62,25 @@ export default function Layout({ children, currentPageName }) {
     document.title = PAGE_TITLES[currentPageName] ?? "Team UP4S";
   }, [currentPageName]);
 
-  // Scroll to top and close the mobile menu on page navigation
+  // On navigation: close the mobile menu, then scroll to the #section in the URL
+  // (pages load lazily, so keep looking for it briefly) or to the top.
   useEffect(() => {
-    window.scrollTo(0, 0);
     setIsMenuOpen(false);
-  }, [location.pathname]);
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) {
+      window.scrollTo(0, 0);
+      return undefined;
+    }
+    let tries = 0;
+    const timer = setInterval(() => {
+      const target = document.getElementById(id);
+      if (target || ++tries > 30) {
+        clearInterval(timer);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+    return () => clearInterval(timer);
+  }, [location.pathname, location.hash]);
 
   // Shadow under the sticky nav once the page is scrolled
   useEffect(() => {

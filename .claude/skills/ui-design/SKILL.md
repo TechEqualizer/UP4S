@@ -101,6 +101,13 @@ Build from `src/components/site/ui.jsx`; don't hand-roll headings, bands or butt
 - Gallery tiles use `MediaCard` / `MediaLightbox` from `components/gallery/MediaCard.jsx`.
 - Impact numbers use `CountUp` (`components/site/CountUp.jsx`): counts once when scrolled into
   view, staggered by `delay`; years pass `from` (e.g. 2000) so they don't count from 0.
+- `Reveal` (`components/site/Reveal.jsx`) fades content up once on scroll; `SectionHeading` already
+  uses it. Stagger card grids with `delay={index * 110}`. It settles on `transform: none`: never
+  leave a transform on an ancestor of fixed-position UI (dialogs portal to `<body>` for this reason).
+- Voice: cinematic and hopeful, never pitying. Film metaphors are welcome in small doses
+  ("This scene didn't make the cut"). Never invent quotes, statistics or costs; reuse the
+  founding story and figures already on the site.
+- Every page should offer the three ways to help: give, refer a kid, volunteer.
 - Feedback is `toast` from sonner, never `alert()`.
 - Respect `prefers-reduced-motion` for slideshows and animations.
 

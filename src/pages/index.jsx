@@ -25,6 +25,7 @@ import DonationSuccess from "./DonationSuccess";
 const TestingDashboard = lazy(() => import("./TestingDashboard"));
 
 import Login from "./Login";
+import NotFound from "./NotFound";
 
 import { AuthProvider, RequireAdmin } from "@/lib/auth";
 
@@ -76,8 +77,9 @@ function _getCurrentPage(url) {
         urlLastPart = urlLastPart.split('?')[0];
     }
 
+    if (!urlLastPart) return Object.keys(PAGES)[0];
     const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
-    return pageName || Object.keys(PAGES)[0];
+    return pageName || 'NotFound';
 }
 
 // Create a wrapper component that uses useLocation inside the Router context
@@ -116,6 +118,8 @@ function PagesContent() {
                 <Route path="/TestingDashboard" element={<RequireAdmin><TestingDashboard /></RequireAdmin>} />
                 
                 <Route path="/Login" element={<Login />} />
+
+                <Route path="*" element={<NotFound />} />
                 
             </Routes>
             </Suspense>

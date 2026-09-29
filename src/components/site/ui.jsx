@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import Reveal from '@/components/site/Reveal';
 
 // Shared building blocks for the public site. See .claude/skills/ui-design/SKILL.md.
 
@@ -65,7 +66,7 @@ export function Eyebrow({ children, tone = 'light', className }) {
 export function SectionHeading({ eyebrow, title, lede, align = 'center', tone = 'light', action, className, as: H = 'h2' }) {
   const centered = align === 'center';
   return (
-    <div className={cn(
+    <Reveal className={cn(
       'mb-10 sm:mb-14',
       action ? 'flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between' : '',
       centered && !action && 'mx-auto max-w-3xl text-center',
@@ -89,7 +90,7 @@ export function SectionHeading({ eyebrow, title, lede, align = 'center', tone = 
         )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
-    </div>
+    </Reveal>
   );
 }
 
@@ -136,7 +137,7 @@ export function Surface({ as: Comp = 'div', className, children, ...props }) {
 }
 
 // Closing call-to-action card (blue gradient) used at the bottom of public pages.
-export function CtaBand({ eyebrow, title, lede, children, footer }) {
+export function CtaBand({ eyebrow, title, lede, children, footer, childrenClassName }) {
   return (
     <section className="px-4 pb-16 sm:px-6 sm:pb-24 lg:px-8">
       <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 px-6 py-16 text-center shadow-2xl shadow-blue-900/20 sm:px-16 sm:py-24">
@@ -145,7 +146,7 @@ export function CtaBand({ eyebrow, title, lede, children, footer }) {
         {eyebrow && <Eyebrow tone="dark" className="mb-4">{eyebrow}</Eyebrow>}
         <h2 className="mx-auto max-w-3xl font-display text-display-lg font-bold text-white">{title}</h2>
         {lede && <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-blue-100">{lede}</p>}
-        {children && <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">{children}</div>}
+        {children && <div className={cn('mt-10 flex flex-col justify-center gap-3 sm:flex-row', childrenClassName)}>{children}</div>}
         {footer && <div className="mt-10 flex flex-col items-center justify-center gap-x-8 gap-y-3 text-sm text-blue-100/90 sm:flex-row">{footer}</div>}
       </div>
     </section>
