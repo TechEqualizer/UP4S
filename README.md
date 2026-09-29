@@ -81,6 +81,12 @@ supabase/
 3. Under Settings → Deployment Protection, make sure Vercel Authentication covers previews only, or visitors will be asked to log in to Vercel.
 4. Point Supabase's Auth Site URL at the site's final domain (`https://www.teamup4s.org`), add `https://www.teamup4s.org/**` and `https://teamup4s.org/**` to Auth Redirect URLs, and list every domain in the `SITE_URL` function secret.
 
+## Event pages and link previews
+
+Every active event has a public page at `/events/<slug>`. The slug is generated from the title when the event is created and then stays the same, so shared links keep working after the title is edited; clear it in the database to regenerate it.
+
+Link crawlers (Facebook, iMessage, WhatsApp, X) don't run JavaScript, so `api/event-page.js` (a Vercel function, routed in `vercel.json`) serves `index.html` with that event's title, description and image in the `<head>`. It reads the event with the public anon key from the `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` environment variables and falls back to the unchanged page on any error. Facebook caches previews; after editing an event, re-scrape the link at https://developers.facebook.com/tools/debug/.
+
 ## Importing data from Base44
 
 Export each entity from the Base44 dashboard (Data → entity → Export CSV) into one folder, then:

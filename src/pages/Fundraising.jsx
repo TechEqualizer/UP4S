@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { FundraisingEvent, VolunteerInquiry } from '@/api/entities';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { eventPath } from '@/lib/events';
+import { shareEvent } from '@/components/site/SharePanel';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Target, Users, Handshake, Mail, Phone, MapPin, Heart, Calendar, Clapperboard, Landmark, Gift, Loader2 } from 'lucide-react';
+import { Target, Users, Handshake, Mail, Phone, MapPin, Heart, Calendar, Clapperboard, Landmark, Gift, Loader2, ArrowRight, Share2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import SmartImage from '@/components/ui/smart-image';
@@ -160,12 +163,12 @@ export default function Fundraising() {
                 return (
                   <Surface as="article" key={event.id} className="flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-xl hover:shadow-gray-900/[0.06]">
                     {event.image_url && (
-                      <div className="relative aspect-video overflow-hidden bg-gray-100">
-                        <SmartImage src={event.image_url} alt={event.title} className="absolute inset-0 h-full w-full object-cover" />
+                      <Link to={eventPath(event)} tabIndex={-1} aria-hidden="true" className="group relative block aspect-video overflow-hidden bg-gray-100">
+                        <SmartImage src={event.image_url} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
                         {isPast && (
                           <span className="absolute left-3 top-3 rounded-full bg-gray-950/80 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">Past event</span>
                         )}
-                      </div>
+                      </Link>
                     )}
                     <div className="flex flex-1 flex-col p-6">
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
@@ -176,7 +179,9 @@ export default function Fundraising() {
                           <span className="flex min-w-0 items-center gap-1.5"><MapPin className="h-4 w-4 shrink-0" aria-hidden="true" /> <span className="truncate">{event.location}</span></span>
                         )}
                       </div>
-                      <h3 className="mt-3 font-display text-xl font-semibold tracking-tight text-gray-900">{event.title}</h3>
+                      <h3 className="mt-3 font-display text-xl font-bold tracking-tight text-gray-900">
+                        <Link to={eventPath(event)} className="rounded hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">{event.title}</Link>
+                      </h3>
                       <div className="mt-3 flex-1">
                         <p className={`whitespace-pre-line leading-relaxed text-gray-600 ${isLong && !isExpanded ? 'line-clamp-4' : ''}`}>
                           {event.description}
@@ -215,6 +220,14 @@ export default function Fundraising() {
                           <Heart className="h-4 w-4" aria-hidden="true" /> Support this event
                         </button>
                       )}
+                      <div className="mt-3 flex gap-2">
+                        <Link to={eventPath(event)} className={ctaClass('secondary', 'sm', 'flex-1')}>
+                          Event details <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                        </Link>
+                        <button type="button" onClick={() => shareEvent(event)} className={ctaClass('secondary', 'sm')} aria-label={`Share ${event.title}`}>
+                          <Share2 className="h-4 w-4" aria-hidden="true" /> Share
+                        </button>
+                      </div>
                     </div>
                   </Surface>
                 );

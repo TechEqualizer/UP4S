@@ -206,7 +206,7 @@ export default function Layout({ children, currentPageName }) {
 
             <div className="hidden items-center gap-1 rounded-full border border-gray-200/80 bg-gray-50/80 p-1 md:flex">
               {NAV_ITEMS.map(({ label, page }) => {
-                const active = currentPageName === page;
+                const active = currentPageName === page || (page === 'Fundraising' && currentPageName === 'Event');
                 return (
                   <Link
                     key={page}
@@ -270,7 +270,7 @@ export default function Layout({ children, currentPageName }) {
             <nav aria-label="Mobile" className="flex-1 overflow-y-auto px-4 py-6">
               <ul className="space-y-1">
                 {[...NAV_ITEMS, { label: 'Refer a Kid', page: 'ReferKid' }].map(({ label, page }) => {
-                  const active = currentPageName === page;
+                  const active = currentPageName === page || (page === 'Fundraising' && currentPageName === 'Event');
                   return (
                     <li key={page}>
                       <Link

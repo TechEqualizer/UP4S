@@ -108,6 +108,9 @@ Build from `src/components/site/ui.jsx`; don't hand-roll headings, bands or butt
   ("This scene didn't make the cut"). Never invent quotes, statistics or costs; reuse the
   founding story and figures already on the site.
 - Every page should offer the three ways to help: give, refer a kid, volunteer.
+- Events: link to `eventPath(event)` (`/events/<slug>`, `src/lib/events.js`), never to the list.
+  Share with `SharePanel` / `shareEvent` / `copyEventLink`; share links always use
+  https://www.teamup4s.org. `api/event-page.js` fills in the link-preview tags for each event.
 - Feedback is `toast` from sonner, never `alert()`.
 - Respect `prefers-reduced-motion` for slideshows and animations.
 
