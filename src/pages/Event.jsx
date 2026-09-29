@@ -9,6 +9,7 @@ import { Container, Eyebrow, Surface, ctaClass } from '@/components/site/ui';
 import Reveal from '@/components/site/Reveal';
 import SharePanel, { shareEvent } from '@/components/site/SharePanel';
 import NotFound from '@/pages/NotFound';
+import TrustRow from '@/components/site/TrustRow';
 import { createPageUrl } from '@/index';
 import { formatCurrency } from '@/lib/utils';
 import { donateToEvent, downloadIcs, eventPath, eventSummary, googleCalendarUrl, isPastEvent } from '@/lib/events';
@@ -158,7 +159,7 @@ export default function EventPage() {
                   <Heart className="h-5 w-5" aria-hidden="true" /> Support this event
                 </button>
               )}
-              <p className="mt-3 text-center text-xs text-gray-500">Tax-deductible · 501(c)(3) · EIN 92-2415944</p>
+              <TrustRow variant="compact" className="mt-4" />
             </Surface>
 
             {!past && start && (
