@@ -30,7 +30,7 @@ function PaymentMarks({ tone }) {
 // Reassurance shown before people hand over payment details. Only claims that are
 // true for Team UP4S: Stripe processes every payment (the site never sees card
 // numbers), it's a registered 501(c)(3), and gifts are tax-deductible.
-export default function TrustRow({ variant = 'full', tone = 'light', className }) {
+export default function TrustRow({ variant = 'full', tone = 'light', showPayments = true, className }) {
   const muted = tone === 'dark' ? 'text-gray-300' : 'text-gray-500';
   const strong = tone === 'dark' ? 'text-white' : 'text-gray-800';
 
@@ -41,7 +41,7 @@ export default function TrustRow({ variant = 'full', tone = 'light', className }
           <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>Secure checkout by <span className={cn('font-semibold', strong)}>Stripe</span> · 501(c)(3) · Tax-deductible</span>
         </p>
-        <PaymentMarks tone={tone} />
+        {showPayments && <PaymentMarks tone={tone} />}
       </div>
     );
   }
@@ -64,9 +64,11 @@ export default function TrustRow({ variant = 'full', tone = 'light', className }
           </span>
         </p>
       </div>
-      <div className={cn('mt-4 border-t pt-3', tone === 'dark' ? 'border-white/10' : 'border-gray-200/80')}>
-        <PaymentMarks tone={tone} />
-      </div>
+      {showPayments && (
+        <div className={cn('mt-4 border-t pt-3', tone === 'dark' ? 'border-white/10' : 'border-gray-200/80')}>
+          <PaymentMarks tone={tone} />
+        </div>
+      )}
     </div>
   );
 }

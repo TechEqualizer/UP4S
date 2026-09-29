@@ -7,16 +7,17 @@ function prefersReducedMotion() {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
-// Netflix-style row of stories. Advances one card every `interval` ms and loops
+// Netflix-style row of stories. Glides one card every `interval` ms and loops
 // seamlessly (the list is rendered twice; after passing the first copy the row
 // jumps back by exactly one copy's width, which looks identical). Pauses on hover,
 // keyboard focus, touch/drag, when off screen, when the tab is hidden, when
 // `paused` is set (e.g. a story is open) and for reduced motion. Swipe and arrow
 // buttons always work; a pause button satisfies WCAG 2.2.2.
-export default function StoryCarousel({ items, onOpen, paused = false, interval = 4500, label = 'Stories' }) {
+export default function StoryCarousel({ items, onOpen, paused = false, interval = 3000, label = 'Stories' }) {
   const regionRef = useRef(null);
   const scrollerRef = useRef(null);
   const idleTimer = useRef(null);
+  const glideFrame = useRef(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [interacting, setInteracting] = useState(false);
@@ -52,9 +53,48 @@ export default function StoryCarousel({ items, onOpen, paused = false, interval 
     });
   }, []);
 
+  // Cinematic glide: an eased ~1s pan instead of the browser's quick smooth scroll.
+  // Snapping is off while it runs so the browser doesn't fight the animation.
+  const stopGlide = useCallback(() => {
+    cancelAnimationFrame(glideFrame.current);
+    const el = scrollerRef.current;
+    if (el) {
+      el.style.scrollSnapType = '';
+      el.style.scrollBehavior = '';
+    }
+  }, []);
+
+  const glideTo = useCallback((left) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    stopGlide();
+    if (reduced) {
+      el.scrollLeft = left;
+      return;
+    }
+    const from = el.scrollLeft;
+    const distance = left - from;
+    if (!distance) return;
+    el.style.scrollSnapType = 'none';
+    el.style.scrollBehavior = 'auto';
+    const duration = 950;
+    const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const start = performance.now();
+    const frame = (now) => {
+      const t = Math.min((now - start) / duration, 1);
+      el.scrollLeft = from + distance * easeInOutCubic(t);
+      if (t < 1) glideFrame.current = requestAnimationFrame(frame);
+      else stopGlide();
+    };
+    glideFrame.current = requestAnimationFrame(frame);
+  }, [reduced, stopGlide]);
+
+  useEffect(() => stopGlide, [stopGlide]);
+
   const move = useCallback((direction) => {
     const el = scrollerRef.current;
     if (!el) return;
+    stopGlide();
     const step = stepWidth();
     if (loop) {
       const copyWidth = step * count;
@@ -63,9 +103,13 @@ export default function StoryCarousel({ items, onOpen, paused = false, interval 
       // Going forward near the end of the second copy: hop back one copy first.
       if (direction > 0 && el.scrollLeft + el.clientWidth >= el.scrollWidth - step / 2) jumpTo(el.scrollLeft - copyWidth);
     }
-    requestAnimationFrame(() => el.scrollBy({ left: direction * step, behavior: reduced ? 'auto' : 'smooth' }));
+    requestAnimationFrame(() => {
+      // Land exactly on a card edge even if a swipe left the row between cards.
+      const target = Math.round(el.scrollLeft / step) * step + direction * step;
+      glideTo(Math.max(0, Math.min(target, el.scrollWidth - el.clientWidth)));
+    });
     setTick((t) => t + 1);
-  }, [count, jumpTo, loop, reduced, stepWidth]);
+  }, [count, glideTo, jumpTo, loop, stepWidth, stopGlide]);
 
   // Keep the position inside the first copy and track which story is first in view.
   useEffect(() => {
@@ -128,6 +172,7 @@ export default function StoryCarousel({ items, onOpen, paused = false, interval 
 
   // Touch, drag or trackpad scrolling pauses autoplay until the person has been idle a few seconds.
   const noteInteraction = () => {
+    stopGlide();
     setInteracting(true);
     clearTimeout(idleTimer.current);
     idleTimer.current = setTimeout(() => {
@@ -197,28 +242,18 @@ export default function StoryCarousel({ items, onOpen, paused = false, interval 
       )}
 
       {loop && (
-        <div className="mt-1 flex items-center gap-4">
-          {!reduced && (
-            <button
-              type="button"
-              onClick={() => { setUserPaused((v) => !v); setTick((t) => t + 1); }}
-              aria-label={userPaused ? 'Play stories' : 'Pause stories'}
-              aria-pressed={userPaused}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-600 ring-1 ring-gray-200 transition hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
-              {userPaused
-                ? <Play className="pointer-events-none ml-0.5 h-4 w-4 fill-current" aria-hidden="true" />
-                : <Pause className="pointer-events-none h-4 w-4 fill-current" aria-hidden="true" />}
-            </button>
-          )}
-          {/* Segmented position indicator; the current segment fills with the timer. */}
-          <div className="flex flex-1 gap-1.5" aria-hidden="true">
+        <div className="mt-2 flex items-center justify-end gap-3">
+          {/* Hairline position indicator; the current segment fills with the timer. */}
+          <div className="flex gap-1" aria-hidden="true">
             {items.map((item, index) => (
-              <span key={item.id} className="relative h-1 flex-1 overflow-hidden rounded-full bg-gray-200">
+              <span
+                key={item.id}
+                className={cn('relative h-0.5 overflow-hidden rounded-full bg-gray-200 transition-all duration-500', index === active ? 'w-8' : 'w-3')}
+              >
                 {index === active && (
                   <span
                     key={tick}
-                    className="absolute inset-0 origin-left rounded-full bg-blue-600"
+                    className="absolute inset-0 origin-left rounded-full bg-gray-900"
                     style={autoplay
                       ? { animation: `hero-progress ${interval}ms linear forwards`, animationPlayState: isPaused ? 'paused' : 'running' }
                       : undefined}
@@ -227,9 +262,25 @@ export default function StoryCarousel({ items, onOpen, paused = false, interval 
               </span>
             ))}
           </div>
-          <p className="shrink-0 text-sm tabular-nums text-gray-500">
-            {active + 1} <span className="text-gray-300">/</span> {count}
-          </p>
+          {/* Pause control stays available (WCAG 2.2.2) but out of the way: it only
+              appears on hover or keyboard focus. */}
+          {!reduced && (
+            <button
+              type="button"
+              onClick={() => { setUserPaused((v) => !v); setTick((t) => t + 1); }}
+              aria-label={userPaused ? 'Play stories' : 'Pause stories'}
+              aria-pressed={userPaused}
+              className={cn(
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:text-gray-900',
+                'focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600',
+                userPaused ? 'opacity-100' : 'opacity-0 group-hover/carousel:opacity-100'
+              )}
+            >
+              {userPaused
+                ? <Play className="pointer-events-none ml-px h-3 w-3 fill-current" aria-hidden="true" />
+                : <Pause className="pointer-events-none h-3 w-3 fill-current" aria-hidden="true" />}
+            </button>
+          )}
         </div>
       )}
     </div>
