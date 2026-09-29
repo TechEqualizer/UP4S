@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { GalleryItem, FundraisingEvent } from '@/api/entities';
 import { Heart, ArrowRight, Camera, Users, Target, ShieldCheck, MapPin, Clapperboard, HandHeart, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
-import { MediaCard, MediaLightbox } from '@/components/gallery/MediaCard';
+import { MediaLightbox } from '@/components/gallery/MediaCard';
+import StoryCarousel from '@/components/gallery/StoryCarousel';
 import { Container, Section, SectionHeading, CtaBand, Accent, Eyebrow, ctaClass } from '@/components/site/ui';
 import Reveal from '@/components/site/Reveal';
 import SmartImage from '@/components/ui/smart-image';
@@ -94,8 +95,13 @@ export default function Homepage() {
   const loadFeaturedGallery = async () => {
     setIsLoading(true);
     try {
-      const items = await GalleryItem.filter({ is_featured: true }, 'display_order', 6);
-      setFeaturedGallery(items);
+      // Featured stories lead the carousel, then the rest of the gallery keeps it fresh.
+      const items = await GalleryItem.list('display_order', 60);
+      const ordered = [...items].sort((a, b) =>
+        Number(b.is_featured) - Number(a.is_featured) ||
+        (a.display_order ?? 0) - (b.display_order ?? 0) ||
+        new Date(b.created_date) - new Date(a.created_date));
+      setFeaturedGallery(ordered.slice(0, 12));
     } catch (error) {
       console.error('Error loading gallery:', error);
       setFeaturedGallery([]);
@@ -337,9 +343,9 @@ export default function Homepage() {
           />
 
           {isLoading ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {Array(6).fill(0).map((_, i) => (
-                <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-gray-200/80">
+            <div className="flex gap-5 overflow-hidden py-6">
+              {Array(4).fill(0).map((_, i) => (
+                <div key={i} className="w-[82%] shrink-0 animate-pulse overflow-hidden rounded-2xl border border-gray-200/80 sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-2.5rem)/3)] xl:w-[calc((100%-3.75rem)/4)]">
                   <div className="aspect-[4/3] bg-gray-100" />
                   <div className="space-y-2 px-4 py-4">
                     <div className="h-4 w-3/4 rounded bg-gray-100" />
@@ -357,17 +363,7 @@ export default function Homepage() {
               <p className="mt-1 text-gray-600">Stories from our youth will be featured here as they create their films.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredGallery.slice(0, 6).map((item, index) => (
-                <MediaCard
-                  key={item.id}
-                  item={item}
-                  onOpen={setSelectedItem}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 0.08}s` }}
-                />
-              ))}
-            </div>
+            <StoryCarousel items={featuredGallery} onOpen={setSelectedItem} paused={!!selectedItem} label="Dreams made real: stories from our youth" />
           )}
         </Container>
       </Section>
