@@ -99,6 +99,8 @@ Build from `src/components/site/ui.jsx`; don't hand-roll headings, bands or butt
 - Icons sit in a tinted tile (`bg-blue-50 text-blue-600 ring-1 ring-blue-100`), never a rainbow
   of gradient squares.
 - Gallery tiles use `MediaCard` / `MediaLightbox` from `components/gallery/MediaCard.jsx`.
+  Rows of stories use `StoryCarousel` (timed, seamless loop, pauses on hover/focus/touch/off-screen,
+  has a pause button, no autoplay for reduced motion).
 - Impact numbers use `CountUp` (`components/site/CountUp.jsx`): counts once when scrolled into
   view, staggered by `delay`; years pass `from` (e.g. 2000) so they don't count from 0.
 - `Reveal` (`components/site/Reveal.jsx`) fades content up once on scroll; `SectionHeading` already
@@ -111,6 +113,9 @@ Build from `src/components/site/ui.jsx`; don't hand-roll headings, bands or butt
 - Events: link to `eventPath(event)` (`/events/<slug>`, `src/lib/events.js`), never to the list.
   Share with `SharePanel` / `shareEvent` / `copyEventLink`; share links always use
   https://www.teamup4s.org. `api/event-page.js` fills in the link-preview tags for each event.
+- Payment steps show `TrustRow` (`components/site/TrustRow.jsx`): Stripe security, 501(c)(3)/EIN,
+  tax-deductible, accepted methods. Only true claims: keep `ACCEPTED_PAYMENTS` in sync with the
+  Stripe dashboard, and never add third-party seals (Candid, BBB, Charity Navigator) not yet earned.
 - Feedback is `toast` from sonner, never `alert()`.
 - Respect `prefers-reduced-motion` for slideshows and animations.
 

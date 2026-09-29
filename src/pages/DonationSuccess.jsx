@@ -71,6 +71,7 @@ export default function DonationSuccess() {
 
         <p className="mt-10 border-t border-gray-100 pt-6 text-sm text-gray-500">
           Team UP4S is a 501(c)(3) nonprofit (EIN 92-2415944). Your donation is tax-deductible to the full extent allowed by law.
+          Keep your receipt for your tax records.
         </p>
       </Surface>
     </div>

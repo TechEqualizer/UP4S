@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Heart, CreditCard, Loader2, Lock } from 'lucide-react';
+import { X, Heart, CreditCard, Loader2 } from 'lucide-react';
+import TrustRow from '@/components/site/TrustRow';
 import { createStripeCheckout } from '@/api/functions';
 import { ctaClass } from '@/components/site/ui';
 
@@ -255,10 +256,7 @@ export default function DonationModal({ isOpen, onClose, event }) {
             )}
           </button>
 
-          <p className="mt-3 text-xs text-gray-500 text-center flex items-center justify-center gap-1.5">
-            <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-            Secure payment by Stripe · Tax-deductible 501(c)(3)
-          </p>
+          <TrustRow className="mt-4" />
         </form>
       </div>
     </div>
