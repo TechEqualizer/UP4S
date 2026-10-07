@@ -23,7 +23,8 @@ export default function DonationModal({ isOpen, onClose, event }) {
   const [donationType, setDonationType] = useState('one-time');
   const [donorInfo, setDonorInfo] = useState({
     name: '',
-    email: ''
+    email: '',
+    anonymous: false
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -90,6 +91,7 @@ export default function DonationModal({ isOpen, onClose, event }) {
         donation_type: donationType,
         donor_name: donorInfo.name.trim(),
         donor_email: donorInfo.email.trim(),
+        is_anonymous: donorInfo.anonymous,
         fund_designation: 'general',
         event_id: event?.id,
         success_url: `${window.location.origin}/DonationSuccess`,
@@ -228,6 +230,20 @@ export default function DonationModal({ isOpen, onClose, event }) {
                 disabled={isProcessing}
               />
             </div>
+            <label htmlFor="donation-anonymous" className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:bg-gray-50">
+              <input
+                id="donation-anonymous"
+                type="checkbox"
+                checked={donorInfo.anonymous}
+                onChange={(e) => setDonorInfo(prev => ({ ...prev, anonymous: e.target.checked }))}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600"
+                disabled={isProcessing}
+              />
+              <span className="text-sm">
+                <span className="block font-medium text-gray-900">Give anonymously</span>
+                <span className="text-gray-500">We won&rsquo;t share your name publicly. Your receipt still goes to your email.</span>
+              </span>
+            </label>
           </div>
 
           {error && (
