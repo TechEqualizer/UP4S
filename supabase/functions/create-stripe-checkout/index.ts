@@ -62,7 +62,9 @@ Deno.serve(async (req) => {
   if (!Number.isFinite(amount) || amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
     return json({ error: `Amount must be between $${MIN_AMOUNT} and $${MAX_AMOUNT}` }, 400);
   }
-  if (!donorName || !donorEmail.includes('@')) {
+  const isAnonymous = body.is_anonymous === true;
+  // Anonymous donors may leave their name out; everyone needs an email for the receipt.
+  if ((!donorName && !isAnonymous) || !donorEmail.includes('@')) {
     return json({ error: 'Name and a valid email are required' }, 400);
   }
 
@@ -78,7 +80,6 @@ Deno.serve(async (req) => {
     if (!event) return json({ error: 'Unknown or inactive fundraising event' }, 400);
     eventId = event.id;
   }
-  const isAnonymous = body.is_anonymous === true;
   const dedicationMessage = String(body.dedication_message ?? '').trim().slice(0, 500) || null;
 
   const successUrl = new URL(sameSiteUrl(body.success_url, '/DonationSuccess'));
@@ -120,7 +121,7 @@ Deno.serve(async (req) => {
     const { error } = await supabaseAdmin.from('donations').insert({
       amount,
       donation_type: donationType,
-      donor_name: donorName,
+      donor_name: donorName || null,
       donor_email: donorEmail,
       fund_designation: fundDesignation,
       event_id: eventId,
