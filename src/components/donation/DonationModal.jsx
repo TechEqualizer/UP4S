@@ -77,8 +77,8 @@ export default function DonationModal({ isOpen, onClose, event }) {
       setError('Please choose an amount of at least $1.');
       return;
     }
-    if (!donorInfo.name.trim() || !donorInfo.email.trim()) {
-      setError('Please enter your name and email address.');
+    if ((!donorInfo.anonymous && !donorInfo.name.trim()) || !donorInfo.email.trim()) {
+      setError(donorInfo.anonymous ? 'Please enter your email address.' : 'Please enter your name and email address.');
       return;
     }
 
@@ -89,7 +89,7 @@ export default function DonationModal({ isOpen, onClose, event }) {
       const checkoutData = {
         amount: numericAmount,
         donation_type: donationType,
-        donor_name: donorInfo.name.trim(),
+        donor_name: donorInfo.anonymous ? '' : donorInfo.name.trim(),
         donor_email: donorInfo.email.trim(),
         is_anonymous: donorInfo.anonymous,
         fund_designation: 'general',
@@ -200,6 +200,21 @@ export default function DonationModal({ isOpen, onClose, event }) {
           </fieldset>
 
           <div className="mb-6 space-y-4">
+            <label htmlFor="donation-anonymous" className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:bg-gray-50">
+              <input
+                id="donation-anonymous"
+                type="checkbox"
+                checked={donorInfo.anonymous}
+                onChange={(e) => setDonorInfo(prev => ({ ...prev, anonymous: e.target.checked }))}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600"
+                disabled={isProcessing}
+              />
+              <span className="text-sm">
+                <span className="block font-medium text-gray-900">Give anonymously</span>
+                <span className="text-gray-500">Leave your name out. We only need your email to send your tax receipt.</span>
+              </span>
+            </label>
+            {!donorInfo.anonymous && (
             <div>
               <label htmlFor="donation-name" className="block text-sm font-medium text-gray-700 mb-2">
                 Full name <span className="text-red-600" aria-hidden="true">*</span>
@@ -215,6 +230,7 @@ export default function DonationModal({ isOpen, onClose, event }) {
                 disabled={isProcessing}
               />
             </div>
+            )}
             <div>
               <label htmlFor="donation-email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email address <span className="text-red-600" aria-hidden="true">*</span>
@@ -230,20 +246,6 @@ export default function DonationModal({ isOpen, onClose, event }) {
                 disabled={isProcessing}
               />
             </div>
-            <label htmlFor="donation-anonymous" className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:bg-gray-50">
-              <input
-                id="donation-anonymous"
-                type="checkbox"
-                checked={donorInfo.anonymous}
-                onChange={(e) => setDonorInfo(prev => ({ ...prev, anonymous: e.target.checked }))}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600"
-                disabled={isProcessing}
-              />
-              <span className="text-sm">
-                <span className="block font-medium text-gray-900">Give anonymously</span>
-                <span className="text-gray-500">We won&rsquo;t share your name publicly. Your receipt still goes to your email.</span>
-              </span>
-            </label>
           </div>
 
           {error && (
