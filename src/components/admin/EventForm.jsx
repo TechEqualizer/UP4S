@@ -225,7 +225,7 @@ export default function EventForm({ event, onSubmit, onCancel, isSubmitting }) {
                 id="fundraising_goal"
                 type="number"
                 min="0"
-                step="100"
+                step="1"
                 value={currentEvent.fundraising_goal}
                 onChange={(e) => setCurrentEvent({...currentEvent, fundraising_goal: e.target.value})}
                 disabled={isSubmitting}
