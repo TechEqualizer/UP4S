@@ -199,7 +199,7 @@ export default function ReferKid() {
       Questions? Email{' '}
       <a href="mailto:teamup4smi@gmail.com" className="font-medium text-blue-700 hover:underline">teamup4smi@gmail.com</a>{' '}
       or call{' '}
-      <a href="tel:5862448492" className="font-medium text-blue-700 hover:underline">(586) 244-8492</a>
+      <a href="tel:5962444922" className="font-medium text-blue-700 hover:underline">(596) 244-4922</a>
     </p>
   );
 

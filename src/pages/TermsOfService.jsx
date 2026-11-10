@@ -60,7 +60,7 @@ export default function TermsOfService() {
             <p>
               For questions about these Terms of Service:
               <br /><strong>Email:</strong> <a href="mailto:teamup4smi@gmail.com">teamup4smi@gmail.com</a>
-              <br /><strong>Phone:</strong> <a href="tel:5862448492">586-244-8492</a>
+              <br /><strong>Phone:</strong> <a href="tel:5962444922">596-244-4922</a>
               <br /><strong>Mailing Address:</strong> PO Box 480012, New Haven, MI 48048
             </p>
         </article>

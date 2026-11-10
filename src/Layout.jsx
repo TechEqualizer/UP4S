@@ -367,9 +367,9 @@ export default function Layout({ children, currentPageName }) {
                     </a>
                   </li>
                   <li>
-                    <a href="tel:5862448492" className={`${footerLink} flex items-center gap-2`}>
+                    <a href="tel:5962444922" className={`${footerLink} flex items-center gap-2`}>
                       <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      586-244-8492
+                      596-244-4922
                     </a>
                   </li>
                   <li className="flex items-start gap-2 text-sm text-gray-400">

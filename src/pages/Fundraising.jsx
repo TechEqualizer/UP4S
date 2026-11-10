@@ -111,7 +111,7 @@ export default function Fundraising() {
 
   const contact = [
     { icon: Mail, label: "Email", value: "teamup4smi@gmail.com", href: "mailto:teamup4smi@gmail.com" },
-    { icon: Phone, label: "Phone", value: "586-244-8492", href: "tel:5862448492" },
+    { icon: Phone, label: "Phone", value: "596-244-4922", href: "tel:5962444922" },
     { icon: MapPin, label: "Mailing address", value: <>PO Box 480012<br />New Haven, MI 48048</> },
   ];
 
